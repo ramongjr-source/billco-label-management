@@ -87,12 +87,10 @@ select { padding-right: 10px; }
 .search-status:empty { display: none; }
 .quantity-lock { position: absolute; right: 13px; top: 11px; color: #737f8e; }
 .quantity-input input[readonly] { padding-right: 42px; }
-.label-type-group { margin-top: 0; }
+.label-type-group { margin: 0 0 23px; }
 .label-type-group legend { margin-bottom: 7px; }
 .choice-row { font-size: 17px; min-height: 31px; line-height: 1.25; cursor: pointer; width: fit-content; }
 input[type="radio"], input[type="checkbox"] { width: 22px; height: 22px; accent-color: #2356d7; flex-shrink: 0; cursor: pointer; }
-.bcc-group { margin: 18px 0 23px; }
-.bcc-help { margin-left: 34px; }
 .form-actions { grid-template-columns: 1.3fr 1fr 1fr; }
 .form-actions .button { height: 57px; font-size: 17px; font-weight: 600; gap: 12px; }
 .form-actions .print-button { font-size: 23px; }

@@ -10,13 +10,20 @@ Fields:
 - Quantity
 - Barcode (fixed-quantity labels only)
 
-Label sizes:
+Product label types are mutually exclusive. Operators select one of these
+four types; the application automatically selects its label dimensions.
 
-- Bulk Fixed and Bulk Variable: 3 x 5 inches
-- Package Fixed and BCC: 3 x 2 inches
+| Label type | Size | Quantity | Barcode |
+| --- | --- | --- | --- |
+| Bulk Fixed | 3 x 5 inches | Fixed and locked | Included |
+| Bulk Variable | 3 x 5 inches | Operator-entered and editable | None |
+| Package Fixed | 3 x 2 inches | Fixed and locked | Included |
+| BCC | 3 x 2 inches | Operator-entered and editable | None |
+
+BCC is a standalone label type.
 
 Only Bulk Fixed and Package Fixed labels contain barcodes.
-Bulk Variable labels and any label with BCC enabled have editable quantities
+Bulk Variable and BCC labels have editable quantities
 and must not contain a barcode.
 
 Excluded:
