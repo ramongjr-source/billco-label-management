@@ -67,13 +67,21 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Import Master List', exact: true })).toBeVisible()
 })
 
-test('previews without writes, commits an added product, and immediately applies all label rules', async ({ page, request }) => {
+test('previews a wide master without writes, commits an added product, and immediately applies all label rules', async ({ page, request }) => {
   const part = partNumber()
   const description = 'BRASS COUPLING 3/8'
   const barcode = `BARCODE-${part}`
   await expect(page.getByRole('button', { name: 'Validate workbook', exact: true })).toBeDisabled()
   await expect(page.getByRole('button', { name: 'Import valid rows', exact: true })).toBeDisabled()
-  await uploadRows(page, [headers, productRow(part, description, 120, 12, barcode)])
+  const wideHeaders = Array.from({ length: 256 }, (_, index) => `Unrelated ${index}`)
+  const wideRow: ExcelJS.CellValue[] = wideHeaders.map(() => ({ formula: '1/0', result: { error: '#DIV/0!' } }))
+  const importedValues = productRow(part, description, 120, 12, barcode)
+  headers.forEach((header, index) => {
+    const column = 70 + index * 32
+    wideHeaders[column] = header
+    wideRow[column] = importedValues[index]
+  })
+  await uploadRows(page, [wideHeaders, wideRow])
   await expect(page.getByRole('button', { name: 'Import valid rows', exact: true })).toBeDisabled()
   expect(await validate(page)).toMatchObject({ added: 1, updated: 0, invalidRows: 0, blankRows: 0 })
   await expectCount(page, 'To add', 1)

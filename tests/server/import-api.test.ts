@@ -113,6 +113,43 @@ test('HTTP legacy import consolidates all nonempty description columns in order'
   })
 })
 
+test('HTTP preview and import accept wide master sheets with either description format and ignore extra columns', async (t) => {
+  const { url } = await startApi(t)
+  for (const legacy of [false, true]) {
+    const columnHeaders = Array.from({ length: 256 }, (_, index) => `Unrelated ${index}`)
+    const mappedHeaders = legacy
+      ? ['Part Number', 'Description1', 'Description2', 'Description3', 'Description4', 'Description5', 'Bulk Fixed Quantity', 'Package Fixed Quantity', 'Barcode Value', 'Status']
+      : headers
+    const part = legacy ? 'WIDE-LEGACY' : 'WIDE-DIRECT'
+    const values = legacy
+      ? [part, 'HEX', '', 'HEAD', null, 'PIPE PLUG', 120, 12, '000SEPARATE-CODE', 'active']
+      : [part, 'HEX HEAD PIPE PLUG', 120, 12, '000SEPARATE-CODE', 'active']
+    const row: ExcelJS.CellValue[] = columnHeaders.map(() => ({ formula: '1/0', result: { error: '#DIV/0!' } }))
+    mappedHeaders.forEach((header, index) => {
+      const position = 70 + index * 17
+      columnHeaders[position] = header
+      row[position] = values[index]
+    })
+    const buffer = await workbookBuffer([row], columnHeaders)
+    const previewResponse = await upload(url, '/api/products/import/preview', buffer)
+    assert.equal(previewResponse.status, 200)
+    const preview = await previewResponse.json()
+    assert.equal(preview.added, 1)
+    assert.equal(preview.invalidRows, 0)
+    assert.deepEqual(preview.errors, [])
+    assert.equal((await fetch(`${url}/api/products?partNumber=${part}`)).status, 404)
+    const response = await upload(url, '/api/products/import', buffer)
+    assert.equal(response.status, 200)
+    assert.equal((await response.json()).added, 1)
+    const lookup = await fetch(`${url}/api/products?partNumber=${part}`)
+    assert.equal(lookup.status, 200)
+    assert.deepEqual(await lookup.json(), {
+      partNumber: part, description: 'HEX HEAD PIPE PLUG', bulkFixedQuantity: 120,
+      packageFixedQuantity: 12, barcodeValue: '000SEPARATE-CODE', status: 'active',
+    })
+  }
+})
+
 test('HTTP import skips blank and invalid rows while reporting row-specific errors and importing valid rows', async (t) => {
   const { db, url } = await startApi(t)
   const buffer = await workbookBuffer([

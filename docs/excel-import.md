@@ -34,9 +34,11 @@ and preserves exact case and leading zeros: `005080` differs from `5080`, and
 The first nonblank worksheet row is the header row. Header matching accepts
 case, spacing, underscore, and camel-case variations of the supported names,
 such as `Part Number`, `part_number`, and `partNumber`.
-The `PN` header is also accepted for Part Number. Unrecognized columns are
-ignored, but a formula in any column still invalidates its data row. Duplicate
-recognized headers, including aliases for the same field, reject the worksheet.
+The `PN` header is also accepted for Part Number. There is no importer limit on
+total worksheet columns. Unrecognized columns are ignored, including their
+values, formulas, and formatting. Required fields may appear anywhere in the
+worksheet. Duplicate recognized headers, including aliases for the same field,
+reject the worksheet.
 
 | Column | Required | Value |
 | --- | --- | --- |
@@ -85,11 +87,12 @@ uses the unpadded integer. Other number formats, fractions, and values exceeding
 the precision limit require Text cells. An identifier already rounded by Excel
 cannot be recovered by the importer.
 
-Formula cells are unsupported. Replace formulas with their values using Excel's
-**Paste Special → Values** before uploading. The importer does not calculate
+Formula cells in imported fields are unsupported. Replace those formulas with
+their values using Excel's **Paste Special → Values** before uploading. The importer does not calculate
 formulas or trust their cached results.
 
-Completely blank rows are skipped and counted. A row missing a required value,
+Rows with no values in any mapped import field are skipped and counted as blank,
+even if unrelated columns contain data. A row missing a required value,
 containing an invalid quantity/status/identifier, or having conflicting
 descriptions is invalid and skipped. Errors identify the original worksheet
 row and field. When the same trimmed, case-sensitive part number appears more
@@ -110,7 +113,6 @@ quantities and never display barcodes.
 | Decompressed ZIP contents | 20 MiB |
 | ZIP entries | 1000 |
 | Data rows in the selected worksheet | 5000 |
-| Worksheet columns | 64 |
 
 The first nonblank header row must occur within the first 5001 worksheet rows.
 The selected worksheet may contain at most 5000 rows after that header.
