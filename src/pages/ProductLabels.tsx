@@ -7,7 +7,13 @@ import { LabelPreviewPanel } from '../components/LabelPreviewPanel'
 import { fixedQuantity, getLabelRules, labelTypes, type LabelType, type Product } from '../data/products'
 import { lookupProduct, ProductLookupError } from '../data/productLookup'
 
-export function ProductLabels() {
+interface ProductLabelsProps {
+  initialLabelType: LabelType
+  onLabelTypeChange: (type: LabelType) => void
+  onNavigateImport: () => void
+}
+
+export function ProductLabels({ initialLabelType, onLabelTypeChange, onNavigateImport }: ProductLabelsProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [partNumber, setPartNumber] = useState('5080')
   const [product, setProduct] = useState<Product | null>(null)
@@ -17,8 +23,8 @@ export function ProductLabels() {
   const [poNumber, setPoNumber] = useState('456789')
   const [lotNumber, setLotNumber] = useState('241007')
   const [quantity, setQuantity] = useState('')
-  const [labelType, setLabelType] = useState<LabelType>('bulk-fixed')
-  const labelTypeRef = useRef<LabelType>('bulk-fixed')
+  const [labelType, setLabelType] = useState<LabelType>(initialLabelType)
+  const labelTypeRef = useRef<LabelType>(initialLabelType)
   const requestIdRef = useRef(0)
   const requestControllerRef = useRef<AbortController | null>(null)
   const previewRef = useRef<HTMLElement>(null)
@@ -81,6 +87,7 @@ export function ProductLabels() {
     const changed = type !== labelTypeRef.current
     labelTypeRef.current = type
     setLabelType(type)
+    onLabelTypeChange(type)
     setMenuOpen(false)
     if (changed) setQuantity(activeProduct && !getLabelRules(type).quantityEditable ? fixedQuantity(activeProduct, type) : '')
   }
@@ -107,6 +114,7 @@ export function ProductLabels() {
     setQuantity('')
     setLabelType('bulk-fixed')
     labelTypeRef.current = 'bulk-fixed'
+    onLabelTypeChange('bulk-fixed')
     document.getElementById('part-number')?.focus()
   }
 
@@ -115,7 +123,7 @@ export function ProductLabels() {
       <a href="#main-content" className="skip-link">Skip to label workspace</a>
       <Header menuOpen={menuOpen} onToggleMenu={() => setMenuOpen((open) => !open)} />
       {menuOpen && <button className="nav-backdrop" type="button" aria-label="Close navigation" onClick={() => setMenuOpen(false)} />}
-      <Sidebar open={menuOpen} labelType={labelType} onSelectLabelType={selectLabelType} />
+      <Sidebar open={menuOpen} labelType={labelType} onSelectLabelType={selectLabelType} onNavigateImport={onNavigateImport} />
       <main id="main-content" className="workspace">
         <div className="workspace-grid">
           <div className="form-column min-w-0">

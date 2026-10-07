@@ -46,9 +46,21 @@ seed products without replacing existing records. See
 [`docs/product-database.md`](docs/product-database.md) for the schema, lookup API,
 persistence, backups, and initialization details.
 
-Authentication, Excel import, printing, reporting, customer database management,
-and SATO integration remain outside the implemented scope. Print and navigation
-for those features are disabled.
+Use **Database → Import Master List** in the sidebar to import an `.xlsx`
+product master. Select **Validate workbook** to preview the first worksheet and
+see available worksheets. To use another worksheet, select it and validate
+again. Review the preview, then select **Import valid rows** to save. The preview
+makes no database changes. Import
+adds new products, updates matching part numbers, and reports invalid and blank
+rows that were skipped. Existing part numbers match exactly after trimming,
+including case and leading zeros. See
+[`docs/excel-import.md`](docs/excel-import.md) for workbook columns, description
+consolidation, identifier rules, and size limits.
+
+Authentication, printing, reporting, customer database management, and SATO
+integration remain outside the implemented scope. Print and navigation for
+those features are disabled. Legacy `.xls` and macro-enabled `.xlsm` imports
+are not supported.
 
 ```sh
 npm run db:setup     # Explicitly migrate and seed the selected local database
@@ -121,14 +133,17 @@ Maintain a master list of products including:
 
 ## Excel Import
 
-Import and update products from Excel files.
+Import and update product master records from `.xlsx` workbooks through
+**Import Master List**. Validation and an add/update preview run before an
+explicit import. Valid rows are saved in one transaction; invalid and blank
+rows are skipped and reported. Duplicate part numbers within the selected
+worksheet are all invalid.
 
-Requirements:
-
-- Support master product lists
-- Support future imports
-- Prevent duplicate part numbers
-- Validate required fields
+Provide a combined Description or legacy Description1 through Description5
+columns; nonempty legacy values are joined with spaces into one description.
+Barcode Value comes directly from the spreadsheet and is independent of Part
+Number. Format identifiers as Text to preserve leading zeros. See
+[`docs/excel-import.md`](docs/excel-import.md) for the complete template and rules.
 
 ---
 
