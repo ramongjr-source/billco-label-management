@@ -3,6 +3,7 @@ import { extname, join, resolve } from 'node:path'
 import type { DatabaseSync } from 'node:sqlite'
 import express from 'express'
 import { findProductByPartNumber } from '../database/index.js'
+import { createProductImportRouter } from './productImportRouter.js'
 
 interface AppOptions {
   staticDirectory?: string
@@ -59,6 +60,8 @@ export function createApp(db: DatabaseSync, options: AppOptions = {}) {
       response.status(500).json({ error: 'Unable to load the product. Please try again.' })
     }
   })
+
+  app.use('/api', createProductImportRouter(db, { onError: reportError }))
 
   app.use('/api', (_request, response) => {
     response.status(404).json({ error: 'API route not found.' })

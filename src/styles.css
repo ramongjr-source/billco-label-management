@@ -152,6 +152,43 @@ input[type="radio"], input[type="checkbox"] { width: 22px; height: 22px; accent-
 .preview-dialog .product-label { margin: 14px auto 0; }
 .nav-backdrop { display: none; }
 
+.import-workspace { min-width: 0; }
+.import-content { max-width: 1500px; min-width: 0; margin: 0 auto; }
+.import-upload-panel, .import-report-panel { padding: 0 20px 20px; margin-bottom: 20px; }
+.import-upload-panel .panel-heading, .import-report-panel .panel-heading { display: flex; align-items: center; gap: 9px; margin-bottom: 16px; }
+.import-file-fields { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 22px; }
+.import-file-fields input[type="file"] { height: auto; min-height: 40px; padding: 7px; font-size: 16px; }
+.import-file-fields input[type="file"]::file-selector-button { border: 1px solid #c5ccd6; background: #e9edf2; border-radius: 3px; padding: 4px 9px; margin-right: 8px; cursor: pointer; }
+.import-guidance { color: #586273; font-size: 17px; line-height: 1.4; margin: 2px 0 18px; }
+.import-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.import-actions .button, .import-return .button { padding: 9px 16px; }
+.import-progress, .import-error { padding: 12px 14px; margin-top: 14px; border: 1px solid #c4d8ec; border-radius: 4px; color: #234967; background: #eef6fd; font-size: 17px; line-height: 1.4; overflow-wrap: anywhere; }
+.import-error { color: #9a2929; background: #fff1f0; border-color: #e8c0bd; }
+.import-report-source { color: #566273; font-size: 17px; overflow-wrap: anywhere; }
+.import-counts { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
+.import-counts > div { background: #f1f4f8; border: 1px solid #dfe5ec; border-radius: 4px; padding: 12px 15px; }
+.import-counts dt { font-size: 15px; color: #5a6575; }
+.import-counts dd { font-size: 28px; font-weight: 700; line-height: 1.3; }
+.import-report-message { font-size: 18px; line-height: 1.4; color: #485466; }
+.import-complete .panel-heading, .import-complete .import-report-message { color: #246343; }
+.import-table-section { margin-top: 24px; }
+.import-table-section h3 { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+.import-table-scroll { overflow-x: auto; border: 1px solid #dce2e9; border-radius: 4px; margin-top: 9px; }
+.import-table { border-collapse: collapse; width: 100%; min-width: 960px; font-size: 16px; text-align: left; }
+.import-table th { background: #edf1f6; color: #39485b; font-weight: 600; }
+.import-table th, .import-table td { padding: 11px 12px; border-bottom: 1px solid #dce2e9; vertical-align: top; overflow-wrap: anywhere; max-width: 280px; }
+.import-table tr:last-child td { border-bottom: 0; }
+.import-table tbody tr:nth-child(even) { background: #f8fafc; }
+.import-barcode-value { white-space: pre-wrap; }
+.import-error-table { min-width: 620px; }
+.import-error-table td:last-child { color: #9a2929; max-width: 640px; }
+.import-action { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 14px; font-weight: 600; }
+.import-action-add { background: #e1f2e8; color: #246343; }
+.import-action-update { background: #e6edfc; color: #2456b3; }
+.import-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; font-size: 15px; color: #586273; }
+.import-pagination .button { min-height: 34px; padding: 4px 12px; font-size: 15px; }
+.import-return { display: flex; justify-content: flex-end; }
+
 @media (min-width: 1700px) {
   .workspace { padding-top: 32px; }
 }
@@ -216,6 +253,12 @@ input[type="radio"], input[type="checkbox"] { width: 22px; height: 22px; accent-
   .preview-size { font-size: 15px; }
   .product-label { border-radius: 14px; }
   .label-detail { gap: 3cqw; }
+  .import-upload-panel, .import-report-panel { padding: 0 14px 16px; }
+  .import-file-fields { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .import-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .import-actions { gap: 8px; }
+  .import-actions .button { flex: 1 1 140px; font-size: 16px; padding: 9px; gap: 7px; }
+  .import-pagination { justify-content: center; }
 }
 
 @media (prefers-reduced-motion: reduce) {

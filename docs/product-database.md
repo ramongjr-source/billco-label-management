@@ -25,6 +25,9 @@ and schema constraints to validate stored values.
 
 The description is one field containing the complete product description. The
 model does not split it into material, dimensions, or another description field.
+Excel import accepts a combined Description or consolidates nonempty legacy
+Description1 through Description5 values into this same field; see
+[`excel-import.md`](excel-import.md) for validation rules.
 
 The initial schema is in `database/migrations/001-create-products.sql`; the
 database access layer is `database/index.ts`. SQL columns use snake case and
@@ -138,6 +141,29 @@ label quantity or render a label preview. Unknown parts, invalid searches, and
 lookup failures must not leave a previous product label available. There is no
 authentication or role-based restriction on this local lookup endpoint.
 
+## Excel master-list import
+
+**Database → Import Master List** opens the `.xlsx` importer. Its validation
+preview reads product records to classify rows as additions or updates without
+writing to the database. Use **Validate workbook** to discover worksheets and
+preview the first one; choose another worksheet and validate again if needed.
+The explicit **Import valid rows** action saves valid rows in one
+transaction and reports invalid and blank rows that were skipped. Database
+failures roll back the valid batch.
+
+An imported, trimmed Part Number updates its exact, case-sensitive match;
+otherwise a new product is inserted. Leading zeros remain part of a text
+identifier. Duplicate part numbers within the selected worksheet invalidate
+every matching row. The spreadsheet supplies quantities, the single combined
+description, Barcode Value, and Active/Inactive status. Barcode Value is stored
+independently and is not derived from Part Number or Description.
+
+The preview and import endpoints are `POST /api/products/import/preview` and
+`POST /api/products/import`. Both accept an `.xlsx` file in the multipart `file`
+field and an optional `sheetName`. Import is the write operation; it revalidates
+the submitted workbook before saving. See [`excel-import.md`](excel-import.md)
+for the full workbook contract, limits, and response details.
+
 ## Build and validation
 
 ```sh
@@ -159,8 +185,9 @@ npm test
 ```
 
 Server tests use `node:test` to exercise the database, seed/migration behavior,
-validation, and lookup API. Browser tests cover API-backed lookup and label
-behavior. `npm test` runs server tests before browser tests. Use
+validation, lookup API, and Excel import. Browser tests cover API-backed lookup,
+label behavior, and the import workflow. `npm test` runs server tests before
+browser tests. Use
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` when testing with an existing Chromium
 installation. Test databases should be temporary and independent of the
 development product store.
@@ -182,5 +209,6 @@ present, then run `npm run db:setup` with the same path. This discards that
 database's local product records and recreates the development samples. Normal
 setup and startup never perform this reset or overwrite existing products.
 
-Product maintenance, Excel import, customer database management, authentication,
-printing, SATO integration, and reporting are not implemented by this change.
+Excel master-list import supports product additions and updates. A general
+product-editing interface, customer database management, authentication,
+printing, SATO integration, and reporting remain outside the implemented scope.
