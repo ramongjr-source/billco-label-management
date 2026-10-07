@@ -34,7 +34,7 @@ export function Sidebar({ open, labelType, onSelectLabelType }: SidebarProps) {
           <div className="nav-children"><button className="nav-item" type="button" disabled>Printer Setup</button><button className="nav-item" type="button" disabled>User Management</button><button className="nav-item" type="button" disabled>System Settings</button></div>
         </div>
       </nav>
-      <p className="sidebar-note">UI prototype · Sample products</p>
+      <p className="sidebar-note">Billco Labeling Platform</p>
     </aside>
   )
 }
