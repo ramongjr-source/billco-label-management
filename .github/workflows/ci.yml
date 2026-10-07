@@ -1,4 +1,4 @@
-name: UI checks
+name: Application checks
 
 on:
   push:

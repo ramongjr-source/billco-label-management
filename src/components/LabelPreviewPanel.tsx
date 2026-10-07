@@ -32,7 +32,7 @@ function ProductLabel({ data, rules }: { data: LabelData; rules: LabelRules }) {
       <LabelDetail name="PO" value={data.poNumber} />
       <LabelDetail name="LOT" value={data.lotNumber} />
       <div className="label-quantity flex items-baseline gap-6"><span>QTY:</span><strong>{data.quantity || '—'}</strong></div>
-      {rules.showBarcode && <Barcode value={data.product.barcode} />}
+      {rules.showBarcode && <Barcode value={data.product.barcodeValue} />}
     </div>
   )
 }
@@ -42,9 +42,12 @@ export function LabelPreviewPanel({ data, rules, previewRef }: { data: LabelData
   const dialogRef = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
-    if (expanded) dialogRef.current?.showModal()
-    else dialogRef.current?.close()
-  }, [expanded])
+    if (expanded && data) dialogRef.current?.showModal()
+    else {
+      dialogRef.current?.close()
+      if (!data && expanded) setExpanded(false)
+    }
+  }, [expanded, data])
 
   return (
     <section className="preview-panel panel" aria-labelledby="preview-heading" ref={previewRef} tabIndex={-1}>
@@ -54,7 +57,7 @@ export function LabelPreviewPanel({ data, rules, previewRef }: { data: LabelData
         <button className="expand-button icon-button" type="button" aria-label="Expand label preview" onClick={() => setExpanded(true)} disabled={!data}><Maximize size={25} /></button>
       </div>
       <div className="preview-stage">
-        {data ? <ProductLabel data={data} rules={rules} /> : <div className={`empty-preview ${rules.height === 2 ? 'compact-empty-preview' : ''} flex flex-col items-center justify-center gap-3`}><PackageSearch size={45} strokeWidth={1.5} /><h3>Ready for your next label</h3><p>Search a sample part number to see its label.</p></div>}
+        {data ? <ProductLabel data={data} rules={rules} /> : <div className={`empty-preview ${rules.height === 2 ? 'compact-empty-preview' : ''} flex flex-col items-center justify-center gap-3`}><PackageSearch size={45} strokeWidth={1.5} /><h3>Ready for your next label</h3><p>Search an active product to see its label.</p></div>}
       </div>
       <p className="preview-policy">{rules.quantityEditable ? 'Editable quantity · No barcode' : 'Fixed quantity · Barcode included'}</p>
       <dialog className="preview-dialog" ref={dialogRef} onCancel={() => setExpanded(false)} onClose={() => setExpanded(false)} aria-labelledby="expanded-preview-heading">

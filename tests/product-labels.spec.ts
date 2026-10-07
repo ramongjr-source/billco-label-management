@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test'
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
+  await expect(page.getByLabel('Description', { exact: true })).toHaveValue('3/8 Brass Coupling')
 })
 
 test('renders the reference product and a real barcode without enabling printing', async ({ page }) => {
@@ -16,7 +17,7 @@ test('renders the reference product and a real barcode without enabling printing
   await expect(page.getByRole('button', { name: 'PRINT', exact: true })).toBeDisabled()
 })
 
-test('searches sample products and prevents a stale label for an unknown part', async ({ page }) => {
+test('looks up products and prevents a stale label for an unknown part', async ({ page }) => {
   await page.getByRole('textbox', { name: 'Part Number', exact: true }).fill('5081')
   await expect(page.getByLabel('Product label preview', { exact: true })).toHaveCount(0)
   await page.getByRole('button', { name: 'Search', exact: true }).click()
@@ -25,7 +26,7 @@ test('searches sample products and prevents a stale label for an unknown part', 
   await expect(page.getByRole('img', { name: 'Code 128 barcode for 5081' })).toBeVisible()
   await page.getByRole('textbox', { name: 'Part Number', exact: true }).fill('missing')
   await page.getByRole('textbox', { name: 'Part Number', exact: true }).press('Enter')
-  await expect(page.getByRole('status')).toContainText('No sample product found')
+  await expect(page.getByRole('status')).toContainText('No product found')
   await expect(page.getByLabel('Description', { exact: true })).toHaveValue('')
   await expect(page.getByRole('heading', { name: 'Ready for your next label' })).toBeVisible()
 })
