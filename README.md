@@ -34,7 +34,9 @@ Search and Enter still perform an immediate lookup. A pending lookup clears the
 previous product's preview, and cancelled or stale responses cannot restore it.
 The label itself uses flat black-and-white thermal styling with a boxed Part
 Number as its largest text. Bulk labels show description, quantity, PO, and lot;
-compact Package Fixed and BCC labels show Part Number, quantity, and lot.
+compact Package Fixed and BCC labels show Part Number, Description, quantity,
+and lot. Compact descriptions wrap to two lines, with `...` for overflow;
+blank descriptions are omitted without shrinking Part Number.
 See [`docs/label-preview.md`](docs/label-preview.md) for layouts and screenshots.
 Selecting Bulk Variable or BCC clears the quantity, and product lookups in
 either type require a new operator-entered quantity.

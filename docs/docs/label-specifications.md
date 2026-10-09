@@ -8,8 +8,10 @@ Common fields:
 - Quantity
 - Barcode (fixed-quantity labels only)
 
-Bulk Fixed and Bulk Variable also show Description and PO Number. The compact
-Package Fixed and BCC layouts omit both fields.
+All formats show Description when nonblank. Bulk Fixed and Bulk Variable also
+show PO Number; compact formats omit PO Number. Package Fixed, BCC, and future
+3x2 formats wrap descriptions to two lines, truncating overflow with `...`.
+This does not change 3x5 description rendering.
 
 Bulk Fixed encodes the imported Bulk Barcode and uses Bulk Fixed Quantity.
 Package Fixed encodes the imported Product Barcode and uses Package Fixed Quantity.
@@ -50,13 +52,15 @@ integration, and PDF generation are not implemented.
 
 Part Number is boxed and is the largest text on every label. Bulk labels rank
 Part Number, Description, Quantity, PO Number, Lot Number, then Barcode.
-Compact labels rank Part Number, Quantity, Lot Number, then Barcode.
+Compact labels rank Part Number, Description, Quantity, Lot Number, then Barcode.
+Adding Description must not shrink the existing Part Number text or boxed area.
 Quantity must remain smaller than Part Number.
 
 Use only black ink on white stock, upright sans-serif text, and flat BILLCO
 CORPORATION branding. No italics, slanted text, decorative fonts, color graphics,
 addresses, websites, rounded label corners, or decorative shadows.
 
-Preserve complete imported text; fit long values within their allocated areas
-while keeping Part Number dominant. Normal and expanded previews share the
+Preserve complete Part Numbers and fit them within their allocated areas.
+Compact descriptions show at most two lines; the full description is available
+on hover. Normal and expanded previews share the
 same renderer and retain the 3x5 or 3x2 aspect ratio at all viewport widths.

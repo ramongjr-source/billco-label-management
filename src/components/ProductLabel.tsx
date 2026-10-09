@@ -51,16 +51,52 @@ function LabelDetail({ name, value }: { name: 'PO' | 'LOT'; value: string }) {
   </div>
 }
 
+function CompactDescription({ description }: { description: string }) {
+  const ref = useRef<HTMLElement>(null)
+  const text = description.replace(/\s+/g, ' ').trim()
+
+  useLayoutEffect(() => {
+    const element = ref.current!
+    let active = true
+    const fit = () => {
+      if (!active) return
+      const fits = () => element.scrollHeight <= element.clientHeight && element.scrollWidth <= element.clientWidth
+      element.textContent = text
+      if (fits()) return
+      const characters = Array.from(text)
+      const shortened = (length: number) => `${characters.slice(0, length).join('').trimEnd()}...`
+      let low = 0
+      let high = characters.length
+      while (low < high) {
+        const middle = Math.ceil((low + high) / 2)
+        element.textContent = shortened(middle)
+        if (fits()) low = middle
+        else high = middle - 1
+      }
+      element.textContent = shortened(low)
+    }
+    fit()
+    const observer = new ResizeObserver(fit)
+    observer.observe(element)
+    void document.fonts.ready.then(fit)
+    return () => { active = false; observer.disconnect() }
+  }, [text])
+
+  return <div className="label-description"><span>DESCRIPTION</span><strong ref={ref} title={description}>{text}</strong></div>
+}
+
 export function ProductLabel({ data, rules }: { data: LabelData; rules: LabelRules }) {
   const compact = rules.height === 2
+  const hasDescription = compact && Boolean(data.product.description.trim())
   return <div
-    className={`product-label${compact ? ' compact-label' : ''}${rules.showBarcode ? '' : ' no-barcode'}`}
+    className={`product-label${compact ? ' compact-label' : ''}${hasDescription ? ' has-description' : ''}${rules.showBarcode ? '' : ' no-barcode'}`}
     style={{ aspectRatio: `${rules.width} / ${rules.height}` }}
     aria-label="Product label preview"
   >
     <div className="label-brand" aria-label="Billco Corporation"><strong>BILLCO</strong><span>CORPORATION</span></div>
     <div className="label-part"><span>PART #</span><FittedText dominant>{data.product.partNumber}</FittedText></div>
     {!compact && <div className="label-description"><span>DESCRIPTION</span><FittedText>{data.product.description}</FittedText></div>}
+    {hasDescription && <CompactDescription description={data.product.description} />}
     <div className="label-quantity"><span>QTY</span><strong>{data.quantity || '—'}</strong></div>
     <div className="label-details">
       {!compact && <LabelDetail name="PO" value={data.poNumber} />}
