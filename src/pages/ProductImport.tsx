@@ -3,11 +3,19 @@ import { CheckCircle2, ChevronRight, FileCheck2, RotateCcw, Upload } from 'lucid
 import { Header } from '../components/Header'
 import { Sidebar } from '../components/Sidebar'
 import type { LabelType } from '../data/products'
-import { commitProductImport, previewProductImport, ProductImportRequestError } from '../data/productImport'
-import type { ProductImportPreview, ProductImportResult } from '../../shared/productImport.js'
+import { commitProductImport, inspectProductImport, previewProductImport, ProductImportRequestError } from '../data/productImport'
+import type { ImportField, ProductImportColumns, ProductImportMapping, ProductImportPreview, ProductImportResult } from '../../shared/productImport.js'
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024
 const PAGE_SIZE = 50
+const mappingFields: Array<{ field: ImportField; label: string }> = [
+  { field: 'partNumber', label: 'Part Number' },
+  { field: 'bulkFixedQuantity', label: 'Bulk Fixed Quantity' },
+  { field: 'packageFixedQuantity', label: 'Package Fixed Quantity' },
+  { field: 'productBarcode', label: 'Product Barcode' },
+  { field: 'bulkBarcode', label: 'Bulk Barcode' },
+  { field: 'status', label: 'Status (optional)' },
+]
 
 interface ProductImportProps {
   labelType: LabelType
@@ -51,10 +59,12 @@ export function ProductImport({ labelType, onNavigateProducts, onSelectLabelType
   const [file, setFile] = useState<File | null>(null)
   const [sheetName, setSheetName] = useState('')
   const [sheetNames, setSheetNames] = useState<string[]>([])
+  const [columns, setColumns] = useState<ProductImportColumns['columns']>([])
+  const [mapping, setMapping] = useState<ProductImportMapping>({ descriptionColumns: [] })
   const [preview, setPreview] = useState<ProductImportPreview | null>(null)
   const [result, setResult] = useState<ProductImportResult | null>(null)
   const [error, setError] = useState('')
-  const [busy, setBusy] = useState<'validating' | 'importing' | null>(null)
+  const [busy, setBusy] = useState<'reading' | 'validating' | 'importing' | null>(null)
   const [rowPage, setRowPage] = useState(1)
   const [errorPage, setErrorPage] = useState(1)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -87,13 +97,60 @@ export function ProductImport({ labelType, onNavigateProducts, onSelectLabelType
     setFile(nextFile)
     setSheetName('')
     setSheetNames([])
+    setColumns([])
+    setMapping({ descriptionColumns: [] })
     if (nextFile) setError(fileError(nextFile))
+    if (nextFile && !fileError(nextFile)) void readColumns(nextFile, '')
   }
 
   function chooseSheet(nextSheet: string) {
     if (committing) return
     resetReport()
     setSheetName(nextSheet)
+    setColumns([])
+    setMapping({ descriptionColumns: [] })
+    if (file) void readColumns(file, nextSheet)
+  }
+
+  async function readColumns(workbook: File, worksheet: string) {
+    cancelRequest()
+    const requestId = requestIdRef.current
+    const controller = new AbortController()
+    controllerRef.current = controller
+    setBusy('reading')
+    try {
+      const detected = await inspectProductImport(workbook, worksheet, controller.signal)
+      if (requestId !== requestIdRef.current) return
+      setSheetName(detected.sheetName)
+      setSheetNames(detected.sheetNames)
+      setColumns(detected.columns)
+      setMapping(detected.mapping)
+    } catch (caught) {
+      if (requestId !== requestIdRef.current || controller.signal.aborted) return
+      setError(caught instanceof Error ? caught.message : 'Unable to read workbook columns.')
+      if (caught instanceof ProductImportRequestError && caught.sheetNames) setSheetNames(caught.sheetNames)
+    } finally {
+      if (requestId === requestIdRef.current) { controllerRef.current = null; setBusy(null) }
+    }
+  }
+
+  function changeMapping(field: ImportField, value: string) {
+    resetReport()
+    setMapping((previous) => {
+      const next = { ...previous }
+      if (value) next[field] = Number(value)
+      else delete next[field]
+      return next
+    })
+  }
+
+  function changeDescription(index: number, value: string) {
+    resetReport()
+    setMapping((previous) => {
+      const descriptions = Array.from({ length: 5 }, (_, n) => previous.descriptionColumns[n] || 0)
+      descriptions[index] = Number(value)
+      return { ...previous, descriptionColumns: descriptions }
+    })
   }
 
   function clear() {
@@ -120,8 +177,8 @@ export function ProductImport({ labelType, onNavigateProducts, onSelectLabelType
     setErrorPage(1)
     try {
       const response = action === 'validating'
-        ? await previewProductImport(file, sheetName, controller.signal)
-        : await commitProductImport(file, sheetName, controller.signal)
+        ? await previewProductImport(file, sheetName, controller.signal, columns.length ? mapping : undefined)
+        : await commitProductImport(file, sheetName, controller.signal, columns.length ? mapping : undefined)
       if (requestId !== requestIdRef.current) return
       setSheetName(response.sheetName)
       setSheetNames(response.sheetNames)
@@ -166,20 +223,41 @@ export function ProductImport({ labelType, onNavigateProducts, onSelectLabelType
               <div className="field-group">
                 <label htmlFor="product-worksheet">Worksheet</label>
                 <select id="product-worksheet" value={sheetName} disabled={!file || committing} onChange={(event) => chooseSheet(event.target.value)} aria-describedby="worksheet-help">
-                  <option value="">First worksheet</option>
+                  <option value="">Automatic (prefer BillcoMaster)</option>
                   {sheetNames.map((name) => <option key={name} value={name}>{name}</option>)}
                 </select>
-                <p id="worksheet-help" className="field-help">Validate once to see available worksheets.</p>
+                <p id="worksheet-help" className="field-help">BillcoMaster is selected automatically when present. Choose a product worksheet.</p>
               </div>
             </div>
-            <p className="import-guidance">Include Part Number, Description, Bulk Fixed Quantity, Package Fixed Quantity, Barcode Value, and Status (active or inactive) columns. Existing part numbers are updated; new part numbers are added. Blank rows are ignored, and invalid rows are skipped.</p>
-            <p className="import-guidance">You can use Description1–Description5 instead of Description. Nonempty description fragments are combined in order. Barcode Value is preserved separately from Part Number.</p>
+            <p className="import-guidance">Use BillcoMaster in Billco_App_Master.xlsx. BillcoPart#, Description, StdPackQty, BulkQty, ProductBarcode, and BulkBarcode are mapped automatically. Other product worksheets can use the column mapping below.</p>
+            <p className="import-guidance">Select one description column or combine up to five in order. Product and bulk barcodes are independent. Without Status, new products are active and updates keep their existing status. Blank quantities and barcodes remain unavailable for fixed labels.</p>
+            {columns.length > 0 && <fieldset className="import-mapping" disabled={committing}>
+              <legend className="panel-heading">Column mapping</legend>
+              <details><summary>Detected columns ({columns.length})</summary><ul>{columns.map((column) => <li key={column.index}>{column.index}: {column.header}</li>)}</ul></details>
+              <div className="import-mapping-grid">
+                {mappingFields.map(({ field, label }) => <div className="field-group" key={field}>
+                  <label htmlFor={`map-${field}`}>Map {label}</label>
+                  <select id={`map-${field}`} value={mapping[field] ?? ''} onChange={(event) => changeMapping(field, event.target.value)}>
+                    <option value="">{field === 'status' ? 'Keep existing status / new active' : 'Not mapped'}</option>
+                    {columns.map((column) => <option key={column.index} value={column.index}>{column.index}: {column.header}</option>)}
+                  </select>
+                </div>)}
+                {Array.from({ length: 5 }, (_, index) => <div className="field-group" key={`description-${index}`}>
+                  <label htmlFor={`map-description-${index}`}>Map Description {index + 1}</label>
+                  <select id={`map-description-${index}`} value={mapping.descriptionColumns[index] || ''} onChange={(event) => changeDescription(index, event.target.value)}>
+                    <option value="">Not mapped</option>
+                    {columns.map((column) => <option key={column.index} value={column.index}>{column.index}: {column.header}</option>)}
+                  </select>
+                </div>)}
+              </div>
+              {!mapping.bulkBarcode && <p className="field-help">{sheetName === 'BillcoMaster' ? 'Map Bulk Barcode to validate BillcoMaster.' : 'Map Bulk Barcode for bulk fixed labels. If omitted, existing bulk barcodes are retained; new products have no bulk barcode.'}</p>}
+            </fieldset>}
             <div className="import-actions">
               <button className="button button-primary" type="submit" disabled={Boolean(busy) || Boolean(fileError(file))}><FileCheck2 size={21} aria-hidden="true" />{busy === 'validating' ? 'Validating…' : 'Validate workbook'}</button>
               <button className="button button-primary" type="button" onClick={() => { void submit('importing') }} disabled={Boolean(busy) || !preview?.rows.length}><Upload size={21} aria-hidden="true" />{committing ? 'Importing…' : 'Import valid rows'}</button>
               <button className="button button-secondary" type="button" onClick={clear} disabled={committing}><RotateCcw size={20} aria-hidden="true" />Clear</button>
             </div>
-            {busy && <p className="import-progress" role="status">{committing ? 'Importing valid product rows. Keep this page open until the import finishes.' : 'Validating the workbook. No products have been changed.'}</p>}
+            {busy && <p className="import-progress" role="status">{committing ? 'Importing valid product rows. Keep this page open until the import finishes.' : busy === 'reading' ? 'Reading worksheet columns. No products have been changed.' : 'Validating the workbook. No products have been changed.'}</p>}
             {error && <p className="import-error" role="alert">{file && <strong>{file.name}: </strong>}{error}</p>}
           </form>
         </section>
@@ -195,9 +273,9 @@ export function ProductImport({ labelType, onNavigateProducts, onSelectLabelType
             <div className="import-table-scroll" tabIndex={0} role="region" aria-label="Valid product rows table">
               <table className="import-table">
                 <caption className="sr-only">Valid products from {file?.name}, worksheet {preview.sheetName}</caption>
-                <thead><tr><th scope="col">Row</th><th scope="col">Action</th><th scope="col">Part Number</th><th scope="col">Description</th><th scope="col">Bulk Fixed Quantity</th><th scope="col">Package Fixed Quantity</th><th scope="col">Barcode Value</th><th scope="col">Status</th></tr></thead>
+                <thead><tr><th scope="col">Row</th><th scope="col">Action</th><th scope="col">Part Number</th><th scope="col">Description</th><th scope="col">Bulk Fixed Quantity</th><th scope="col">Package Fixed Quantity</th><th scope="col">Product Barcode</th><th scope="col">Bulk Barcode</th><th scope="col">Status</th></tr></thead>
                 <tbody>{preview.rows.slice((rowPage - 1) * PAGE_SIZE, rowPage * PAGE_SIZE).map(({ row, product, action }) => <tr key={row}>
-                  <td>{row}</td><td><span className={`import-action import-action-${action}`}>{action === 'add' ? 'Add' : 'Update'}</span></td><td>{product.partNumber}</td><td>{product.description}</td><td>{product.bulkFixedQuantity}</td><td>{product.packageFixedQuantity}</td><td className="import-barcode-value">{product.barcodeValue}</td><td>{product.status === 'active' ? 'Active' : 'Inactive'}</td>
+                  <td>{row}</td><td><span className={`import-action import-action-${action}`}>{action === 'add' ? 'Add' : 'Update'}</span></td><td>{product.partNumber}</td><td>{product.description}</td><td>{product.bulkFixedQuantity ?? '—'}</td><td>{product.packageFixedQuantity ?? '—'}</td><td className="import-barcode-value">{product.productBarcode || '—'}</td><td className="import-barcode-value">{product.bulkBarcode || '—'}</td><td>{product.status === 'active' ? 'Active' : 'Inactive'}</td>
                 </tr>)}</tbody>
               </table>
             </div>

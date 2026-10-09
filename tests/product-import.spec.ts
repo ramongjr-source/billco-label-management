@@ -3,7 +3,7 @@ import { expect, test, type APIRequestContext, type Page } from '@playwright/tes
 import ExcelJS from 'exceljs'
 import type { ProductImportPreview, ProductImportResult } from '../shared/productImport.js'
 
-const headers = ['Part Number', 'Description', 'Bulk Fixed Quantity', 'Package Fixed Quantity', 'Barcode Value', 'Status']
+const headers = ['Part Number', 'Description', 'Bulk Fixed Quantity', 'Package Fixed Quantity', 'Product Barcode', 'Status', 'Bulk Barcode']
 const workbookMimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
 function partNumber() {
@@ -11,7 +11,7 @@ function partNumber() {
 }
 
 function productRow(part: string, description = 'IMPORTED BRASS COUPLING', bulk = 120, pack = 12, barcode = `BC-${part}`, status = 'active'): ExcelJS.CellValue[] {
-  return [part, description, bulk, pack, barcode, status]
+  return [part, description, bulk, pack, barcode, status, `BULK-${barcode}`]
 }
 
 async function workbookFile(name: string, sheets: { name: string; rows: ExcelJS.CellValue[][] }[]) {
@@ -71,6 +71,7 @@ test('previews a wide master without writes, commits an added product, and immed
   const part = partNumber()
   const description = 'BRASS COUPLING 3/8'
   const barcode = `BARCODE-${part}`
+  const bulkBarcode = `BULK-${barcode}`
   await expect(page.getByRole('button', { name: 'Validate workbook', exact: true })).toBeDisabled()
   await expect(page.getByRole('button', { name: 'Import valid rows', exact: true })).toBeDisabled()
   const wideHeaders = Array.from({ length: 256 }, (_, index) => `Unrelated ${index}`)
@@ -113,8 +114,8 @@ test('previews a wide master without writes, commits an added product, and immed
       await expect(preview.locator('.barcode-group')).toHaveCount(0)
     } else {
       await expect(quantity).toHaveAttribute('readonly', '')
-      await expect(preview.locator('.barcode-value')).toHaveText(barcode)
-      await expect(preview.getByRole('img', { name: `Code 128 barcode for ${barcode}` })).toBeVisible()
+      await expect(preview.locator('.barcode-value')).toHaveText(mode.height === 5 ? bulkBarcode : barcode)
+      await expect(preview.getByRole('img', { name: `Code 128 barcode for ${mode.height === 5 ? bulkBarcode : barcode}` })).toBeVisible()
     }
   }
 })
@@ -142,7 +143,7 @@ test('updates matching part numbers and adds new products in the same import', a
   await expectCount(page, 'Added', 1)
   await expectCount(page, 'Updated', 1)
   expect(await (await request.get(`/api/products?partNumber=${existing}`)).json()).toMatchObject({
-    partNumber: existing, description: 'UPDATED DESCRIPTION', bulkFixedQuantity: 240, packageFixedQuantity: 24, barcodeValue: `NEW-${existing}`,
+    partNumber: existing, description: 'UPDATED DESCRIPTION', bulkFixedQuantity: 240, packageFixedQuantity: 24, productBarcode: `NEW-${existing}`,
   })
   expect(await (await request.get(`/api/products?partNumber=${added}`)).json()).toMatchObject({ partNumber: added, description: 'NEW PRODUCT' })
 })
@@ -150,16 +151,16 @@ test('updates matching part numbers and adds new products in the same import', a
 test('consolidates legacy description fragments while preserving a separate barcode', async ({ page, request }) => {
   const part = partNumber()
   const barcode = `LEGACY-${part}`
-  const legacyHeaders = ['Part Number', 'Description1', 'Description2', 'Description3', 'Description4', 'Description5', 'Bulk Fixed Quantity', 'Package Fixed Quantity', 'Barcode Value', 'Status']
-  await uploadRows(page, [legacyHeaders, [part, '  BRASS ', '', ' COUPLING  ', null, ' 3/8 ', 80, 8, barcode, 'active']], 'legacy-master.xlsx')
+  const legacyHeaders = ['Part Number', 'Description1', 'Description2', 'Description3', 'Description4', 'Description5', 'Bulk Fixed Quantity', 'Package Fixed Quantity', 'Product Barcode', 'Status', 'Bulk Barcode']
+  await uploadRows(page, [legacyHeaders, [part, '  BRASS ', '', ' COUPLING  ', null, ' 3/8 ', 80, 8, barcode, 'active', `BULK-${barcode}`]], 'legacy-master.xlsx')
   const preview = await validate(page)
-  expect(preview.rows[0]?.product).toMatchObject({ partNumber: part, description: 'BRASS COUPLING 3/8', barcodeValue: barcode })
+  expect(preview.rows[0]?.product).toMatchObject({ partNumber: part, description: 'BRASS COUPLING 3/8', productBarcode: barcode })
   await expect(page.getByRole('region', { name: 'Valid product rows table', exact: true })).toContainText('BRASS COUPLING 3/8')
   await expectMissing(request, part)
   await commit(page)
   await lookupImportedProduct(page, part, 'BRASS COUPLING 3/8')
   await expect(page.locator('.label-description strong').first()).toHaveText('BRASS COUPLING 3/8')
-  await expect(page.locator('.barcode-value').first()).toHaveText(barcode)
+  await expect(page.locator('.barcode-value').first()).toHaveText(`BULK-${barcode}`)
 })
 
 test('reports original row errors, ignores blank rows, and skips every duplicate occurrence', async ({ page, request }) => {
@@ -212,7 +213,7 @@ test('invalidates an old preview when the worksheet or workbook changes', async 
   expect(secondPreview.sheetName).toBe('Second products')
   expect(secondPreview.rows.map((row) => row.product.partNumber)).toEqual([second])
   await uploadRows(page, [headers, productRow(replacement)], 'replacement.xlsx', 'Replacement products')
-  await expect(page.getByLabel('Worksheet', { exact: true })).toHaveValue('')
+  await expect(page.getByLabel('Worksheet', { exact: true })).toHaveValue('Replacement products')
   await expect(page.getByRole('heading', { name: 'Validation preview', exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Import valid rows', exact: true })).toBeDisabled()
   const replacementPreview = await validate(page)
@@ -295,4 +296,79 @@ test('keeps the importer usable on mobile without making the page scroll horizon
     await expect(page.getByRole('button', { name: 'Import valid rows', exact: true })).toBeEnabled()
     expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), `Horizontal page overflow at ${width}px`).toBe(false)
   }
+})
+
+test('prefers BillcoMaster, maps its production headers, and selects independent fixed-label barcodes', async ({ page, request }) => {
+  const part = partNumber()
+  const packOnly = partNumber()
+  await page.getByLabel('Excel workbook (.xlsx)', { exact: true }).setInputFiles(await workbookFile('Billco_App_Master.xlsx', [
+    { name: 'Service PL', rows: [['Customer source'], ['Ignored customer row']] },
+    { name: 'BillcoMaster', rows: [
+      ['BillcoPart#', 'StdPackQty', 'Size', 'Description', 'ProductBarcode', 'BulkQty', 'BulkBarcode'],
+      [part, 25, 'Ignored', 'PRODUCTION PRODUCT', `PACK-${part}`, 250, `BULK-${part}`],
+      [packOnly, 10, 'Ignored', 'PACKAGE ONLY PRODUCT', `PACK-${packOnly}`, null, null],
+    ] },
+  ]))
+  await expect(page.getByLabel('Worksheet', { exact: true })).toHaveValue('BillcoMaster')
+  await expect(page.getByLabel('Map Part Number', { exact: true })).toHaveValue('1')
+  await expect(page.getByLabel('Map Product Barcode', { exact: true })).toHaveValue('5')
+  await expect(page.getByLabel('Map Bulk Barcode', { exact: true })).toHaveValue('7')
+  await page.getByText('Detected columns (7)', { exact: true }).click()
+  await expect(page.locator('.import-mapping details')).toContainText('3: Size')
+  expect(await validate(page)).toMatchObject({ sheetName: 'BillcoMaster', added: 2, invalidRows: 0 })
+  await expectMissing(request, part)
+  await commit(page)
+  await lookupImportedProduct(page, part, 'PRODUCTION PRODUCT')
+  await expect(page.locator('.barcode-value').first()).toHaveText(`BULK-${part}`)
+  await page.getByRole('button', { name: 'Expand label preview' }).click()
+  await expect(page.getByRole('dialog').locator('.barcode-value')).toHaveText(`BULK-${part}`)
+  await page.keyboard.press('Escape')
+  await page.getByRole('radio', { name: 'Package Fixed Qty', exact: true }).check()
+  await expect(page.locator('.barcode-value').first()).toHaveText(`PACK-${part}`)
+  await page.getByRole('radio', { name: 'Bulk Variable Qty', exact: true }).check()
+  await page.getByRole('spinbutton', { name: 'Quantity', exact: true }).fill('42')
+  await expect(page.locator('.barcode-group')).toHaveCount(0)
+  await page.getByRole('radio', { name: 'BCC', exact: true }).check()
+  await page.getByRole('spinbutton', { name: 'Quantity', exact: true }).fill('8')
+  await expect(page.locator('.barcode-group')).toHaveCount(0)
+  await page.getByRole('radio', { name: 'Bulk Fixed Qty', exact: true }).check()
+  await page.getByRole('textbox', { name: 'Part Number', exact: true }).fill(packOnly)
+  await page.getByRole('button', { name: 'Search', exact: true }).click()
+  await expect(page.getByLabel('Description', { exact: true })).toHaveValue('PACKAGE ONLY PRODUCT')
+  await expect(page.getByRole('status').filter({ hasText: 'missing its bulk fixed quantity or barcode' })).toBeVisible()
+  await expect(page.getByLabel('Product label preview', { exact: true })).toHaveCount(0)
+  await page.getByRole('radio', { name: 'Package Fixed Qty', exact: true }).check()
+  await expect(page.locator('.barcode-value').first()).toHaveText(`PACK-${packOnly}`)
+  for (const name of ['BCC', 'Bulk Variable Qty']) {
+    await page.getByRole('radio', { name, exact: true }).check()
+    const quantity = page.getByRole('spinbutton', { name: 'Quantity', exact: true })
+    await expect(quantity).not.toHaveAttribute('readonly', '')
+    await quantity.fill('16')
+    await expect(page.getByLabel('Product label preview', { exact: true })).toBeVisible()
+    await expect(page.locator('.label-quantity strong').first()).toHaveText('16')
+    await expect(page.locator('.barcode-group')).toHaveCount(0)
+  }
+})
+
+test('maps arbitrary supplier headers and ordered descriptions, and invalidates preview when mapping changes', async ({ page, request }) => {
+  const part = partNumber()
+  await uploadRows(page, [
+    ['Supplier Part No', 'Material', 'Shape', 'Bulk Count', 'Unit Count', 'Unit UPC', 'Master Case UPC'],
+    [part, 'HEX', 'HEAD', 300, 30, `PRODUCT-${part}`, `BULK-${part}`],
+  ])
+  await expect(page.getByLabel('Map Part Number', { exact: true })).toBeVisible()
+  for (const [label, column] of [
+    ['Part Number', '1'], ['Description 1', '2'], ['Description 2', '3'],
+    ['Bulk Fixed Quantity', '4'], ['Package Fixed Quantity', '5'], ['Product Barcode', '6'], ['Bulk Barcode', '7'],
+  ]) await page.getByLabel(`Map ${label}`, { exact: true }).selectOption(column)
+  const first = await validate(page)
+  expect(first.rows[0].product.description).toBe('HEX HEAD')
+  await page.getByLabel('Map Description 2', { exact: true }).selectOption('')
+  await expect(page.getByRole('heading', { name: 'Validation preview', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Import valid rows', exact: true })).toBeDisabled()
+  expect((await validate(page)).rows[0].product.description).toBe('HEX')
+  await expectMissing(request, part)
+  await commit(page)
+  const product = await (await request.get(`/api/products?partNumber=${part}`)).json()
+  expect(product).toMatchObject({ description: 'HEX', productBarcode: `PRODUCT-${part}`, bulkBarcode: `BULK-${part}` })
 })

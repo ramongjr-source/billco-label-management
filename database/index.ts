@@ -7,6 +7,7 @@ export { seedProducts } from './seed.js'
 
 const migrations = [
   { version: 1, filename: '001-create-products.sql' },
+  { version: 2, filename: '002-separate-barcodes.sql' },
 ] as const
 
 export function openProductDatabase(filename: string): DatabaseSync {
@@ -65,7 +66,8 @@ export function findProductByPartNumber(db: DatabaseSync, partNumber: string): P
       description,
       bulk_fixed_quantity AS bulkFixedQuantity,
       package_fixed_quantity AS packageFixedQuantity,
-      barcode_value AS barcodeValue,
+      product_barcode AS productBarcode,
+      bulk_barcode AS bulkBarcode,
       status
     FROM products
     WHERE part_number = ? COLLATE BINARY
@@ -75,9 +77,10 @@ export function findProductByPartNumber(db: DatabaseSync, partNumber: string): P
   return {
     partNumber: row.partNumber as string,
     description: row.description as string,
-    bulkFixedQuantity: row.bulkFixedQuantity as number,
-    packageFixedQuantity: row.packageFixedQuantity as number,
-    barcodeValue: row.barcodeValue as string,
+    bulkFixedQuantity: row.bulkFixedQuantity as number | null,
+    packageFixedQuantity: row.packageFixedQuantity as number | null,
+    productBarcode: row.productBarcode as string,
+    bulkBarcode: row.bulkBarcode as string,
     status: row.status as Product['status'],
   }
 }

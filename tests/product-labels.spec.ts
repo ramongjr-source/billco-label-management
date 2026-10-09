@@ -132,10 +132,10 @@ test('keeps long PO and lot values and the barcode inside the label', async ({ p
   for (const width of [1536, 390]) {
     await page.setViewportSize({ width, height: 1024 })
     const label = await page.locator('.product-label').first().boundingBox()
-    const barcodeValue = await page.locator('.barcode-value').first().boundingBox()
+    const productBarcode = await page.locator('.barcode-value').first().boundingBox()
     expect(label).not.toBeNull()
-    expect(barcodeValue).not.toBeNull()
-    expect(barcodeValue!.y + barcodeValue!.height).toBeLessThan(label!.y + label!.height)
+    expect(productBarcode).not.toBeNull()
+    expect(productBarcode!.y + productBarcode!.height).toBeLessThan(label!.y + label!.height)
   }
 })
 

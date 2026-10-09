@@ -273,3 +273,7 @@ input[type="radio"], input[type="checkbox"] { width: 22px; height: 22px; accent-
   .preview-heading h2 { font-size: 21px; }
   .preview-size { font-size: 13px; }
 }
+
+.import-mapping { margin: 16px 0; min-width: 0; }
+.import-mapping-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; margin-top: 16px; }
+.import-mapping details ul { max-height: 180px; overflow: auto; padding: 10px; overflow-wrap: anywhere; }

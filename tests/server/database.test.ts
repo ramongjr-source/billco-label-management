@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test, type TestContext } from 'node:test'
@@ -15,10 +15,10 @@ function database(t: TestContext): DatabaseSync {
 
 const valid = ['P-0001', 'BRASS COUPLING 3/8', 120, 12, 'BARCODE-P-0001', 'active']
 
-function insert(db: DatabaseSync, values = valid) {
+function insert(db: DatabaseSync, values: Array<string | number | null> = valid) {
   db.prepare(`
     INSERT INTO products
-      (part_number, description, bulk_fixed_quantity, package_fixed_quantity, barcode_value, status)
+      (part_number, description, bulk_fixed_quantity, package_fixed_quantity, product_barcode, status)
     VALUES (?, ?, ?, ?, ?, ?)
   `).run(...values)
 }
@@ -26,11 +26,11 @@ function insert(db: DatabaseSync, values = valid) {
 test('initial migration creates strict products and tracks its version once', (t) => {
   const db = openProductDatabase(':memory:')
   t.after(() => db.close())
-  assert.equal(migrateDatabase(db), 1)
+  assert.equal(migrateDatabase(db), 2)
   assert.equal(migrateDatabase(db), 0)
-  assert.deepEqual({ ...db.prepare('SELECT version, name FROM schema_migrations').get() }, {
-    version: 1,
-    name: '001-create-products.sql',
+  assert.deepEqual({ ...db.prepare('SELECT version, name FROM schema_migrations ORDER BY version DESC LIMIT 1').get() }, {
+    version: 2,
+    name: '002-separate-barcodes.sql',
   })
   assert.equal(db.prepare("SELECT strict FROM pragma_table_list WHERE name = 'products'").get()?.strict, 1)
   assert.equal(db.prepare('SELECT COUNT(*) AS count FROM products').get()?.count, 0)
@@ -53,7 +53,6 @@ test('schema rejects duplicate part numbers and invalid required fields', (t) =>
     { name: 'blank description', index: 1, value: '\t  \n' },
     { name: 'Unicode whitespace-only description', index: 1, value: '\u00a0\u2007\ufeff' },
     { name: 'long description', index: 1, value: 'D'.repeat(513) },
-    { name: 'null bulk quantity', index: 2, value: null },
     { name: 'zero bulk quantity', index: 2, value: 0 },
     { name: 'fractional bulk quantity', index: 2, value: 1.5 },
     { name: 'long bulk quantity', index: 2, value: 1000000 },
@@ -74,7 +73,7 @@ test('schema rejects duplicate part numbers and invalid required fields', (t) =>
     assert.throws(() => {
       db.prepare(`
         INSERT INTO products
-          (part_number, description, bulk_fixed_quantity, package_fixed_quantity, barcode_value, status)
+          (part_number, description, bulk_fixed_quantity, package_fixed_quantity, product_barcode, status)
         VALUES (?, ?, ?, ?, ?, ?)
       `).run(...values)
     }, name)
@@ -101,7 +100,8 @@ test('lookup preserves textual leading zeros, exact case, combined descriptions,
     description: 'BRASS COUPLING 3/8',
     bulkFixedQuantity: 120,
     packageFixedQuantity: 12,
-    barcodeValue: 'BILLCO-5083',
+    productBarcode: 'BILLCO-5083',
+    bulkBarcode: '',
     status: 'active',
   })
   assert.equal(findProductByPartNumber(db, '5080'), undefined)
@@ -125,7 +125,7 @@ test('explicit seeding is idempotent and never overwrites or reactivates existin
   assert.equal(seedProducts(db), 5)
   db.prepare(`
     UPDATE products
-    SET description = ?, bulk_fixed_quantity = ?, package_fixed_quantity = ?, barcode_value = ?, status = ?
+    SET description = ?, bulk_fixed_quantity = ?, package_fixed_quantity = ?, product_barcode = ?, status = ?
     WHERE part_number = ?
   `).run('Maintained master record', 777, 77, 'MASTER-5080', 'inactive', '5080')
   assert.equal(seedProducts(db), 0)
@@ -134,7 +134,8 @@ test('explicit seeding is idempotent and never overwrites or reactivates existin
     description: 'Maintained master record',
     bulkFixedQuantity: 777,
     packageFixedQuantity: 77,
-    barcodeValue: 'MASTER-5080',
+    productBarcode: 'MASTER-5080',
+    bulkBarcode: '5080',
     status: 'inactive',
   })
   assert.equal(findProductByPartNumber(db, '5090')?.status, 'inactive')
@@ -167,7 +168,27 @@ test('file-backed products persist across closing, reopening, migrating, and see
 
 test('migration refuses a schema from an incompatible application version', (t) => {
   const db = database(t)
-  db.prepare('INSERT INTO schema_migrations (version, name) VALUES (?, ?)').run(2, 'future.sql')
+  db.prepare('INSERT INTO schema_migrations (version, name) VALUES (?, ?)').run(3, 'future.sql')
   assert.throws(() => migrateDatabase(db), /incompatible/)
   assert.equal(db.prepare('SELECT COUNT(*) AS count FROM products').get()?.count, 0)
+})
+
+test('legacy migration preserves product records and never invents a bulk barcode', (t) => {
+  const db = openProductDatabase(':memory:')
+  t.after(() => db.close())
+  db.exec(readFileSync(new URL('../../database/migrations/001-create-products.sql', import.meta.url), 'utf8'))
+  db.exec("CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL DEFAULT 'legacy') STRICT")
+  db.prepare('INSERT INTO schema_migrations (version, name) VALUES (?, ?)').run(1, '001-create-products.sql')
+  db.prepare('INSERT INTO products VALUES (?, ?, ?, ?, ?, ?)').run('000LEGACY', 'Retained description', 150, 15, '000OLD-CODE', 'inactive')
+  assert.equal(migrateDatabase(db), 1)
+  assert.equal(migrateDatabase(db), 0)
+  assert.deepEqual(findProductByPartNumber(db, '000LEGACY'), {
+    partNumber: '000LEGACY', description: 'Retained description', bulkFixedQuantity: 150,
+    packageFixedQuantity: 15, productBarcode: '000OLD-CODE', bulkBarcode: '', status: 'inactive',
+  })
+  insert(db, ['PACKAGE-ONLY', 'No bulk data', null, 10, 'PACKAGE-CODE', 'active'])
+  assert.equal(findProductByPartNumber(db, 'PACKAGE-ONLY')?.bulkFixedQuantity, null)
+  for (const code of [' ', 'BÁR', 'B'.repeat(129), 'B\nCODE']) {
+    assert.throws(() => db.prepare('UPDATE products SET bulk_barcode = ? WHERE part_number = ?').run(code, '000LEGACY'))
+  }
 })

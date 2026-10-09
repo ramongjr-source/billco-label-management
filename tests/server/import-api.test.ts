@@ -62,7 +62,7 @@ test('HTTP preview classifies additions and updates without modifying stored pro
   assert.deepEqual(preview.errors, [])
   assert.deepEqual(preview.rows.map((row: { row: number; action: string }) => [row.row, row.action]), [[2, 'update'], [3, 'add']])
   assert.equal(preview.rows[1].product.partNumber, '00075')
-  assert.equal(preview.rows[1].product.barcodeValue, 'BARCODE-ONLY')
+  assert.equal(preview.rows[1].product.productBarcode, 'BARCODE-ONLY')
   assert.deepEqual(findProductByPartNumber(db, '5080'), original)
   assert.equal(findProductByPartNumber(db, '00075'), undefined)
 })
@@ -86,11 +86,11 @@ test('HTTP import adds and updates products, preserves uniqueness, and immediate
   assert.equal(lookup.status, 200)
   assert.deepEqual(await lookup.json(), {
     partNumber: '5080', description: 'Updated product', bulkFixedQuantity: 800,
-    packageFixedQuantity: 80, barcodeValue: 'SEPARATE-CODE', status: 'inactive',
+    packageFixedQuantity: 80, productBarcode: 'SEPARATE-CODE', bulkBarcode: '5080', status: 'inactive',
   })
   const leadingZeroLookup = await fetch(`${url}/api/products?partNumber=00075`)
   assert.equal(leadingZeroLookup.status, 200)
-  assert.equal((await leadingZeroLookup.json()).barcodeValue, 'ALTERNATE-BARCODE')
+  assert.equal((await leadingZeroLookup.json()).productBarcode, 'ALTERNATE-BARCODE')
   const repeated = await upload(url, '/api/products/import', buffer)
   assert.equal(repeated.status, 200)
   const repeatedResult = await repeated.json()
@@ -109,7 +109,7 @@ test('HTTP legacy import consolidates all nonempty description columns in order'
   assert.equal((await response.json()).added, 1)
   assert.deepEqual(findProductByPartNumber(db, 'LEGACY'), {
     partNumber: 'LEGACY', description: 'HEX HEAD PIPE PLUG', bulkFixedQuantity: 100,
-    packageFixedQuantity: 10, barcodeValue: 'LEGACY-BARCODE', status: 'active',
+    packageFixedQuantity: 10, productBarcode: 'LEGACY-BARCODE', bulkBarcode: '', status: 'active',
   })
 })
 
@@ -145,7 +145,7 @@ test('HTTP preview and import accept wide master sheets with either description 
     assert.equal(lookup.status, 200)
     assert.deepEqual(await lookup.json(), {
       partNumber: part, description: 'HEX HEAD PIPE PLUG', bulkFixedQuantity: 120,
-      packageFixedQuantity: 12, barcodeValue: '000SEPARATE-CODE', status: 'active',
+      packageFixedQuantity: 12, productBarcode: '000SEPARATE-CODE', bulkBarcode: '', status: 'active',
     })
   }
 })
@@ -156,7 +156,7 @@ test('HTTP import skips blank and invalid rows while reporting row-specific erro
     ['VALID', 'Valid product', 100, 10, 'VALID-CODE', 'active'],
     [],
     ['BAD', 'Invalid quantity', 0, 10, 'BAD-CODE', 'active'],
-    ['EMPTY-CODE', 'Missing barcode', 100, 10, '', 'active'],
+    ['EMPTY-CODE', 'Invalid barcode', 100, 10, 'BAD\nCODE', 'active'],
   ])
   const previewResponse = await upload(url, '/api/products/import/preview', buffer)
   assert.equal(previewResponse.status, 200)

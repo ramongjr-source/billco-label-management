@@ -5,10 +5,11 @@ export class ProductLookupError extends Error {}
 function isProduct(value: unknown): value is Product {
   if (!value || typeof value !== 'object') return false
   const product = value as Partial<Product>
-  const validQuantity = (quantity: unknown) => typeof quantity === 'number' && Number.isInteger(quantity) && quantity >= 1 && quantity <= 999999
+  const validQuantity = (quantity: unknown) => quantity === null || typeof quantity === 'number' && Number.isInteger(quantity) && quantity >= 1 && quantity <= 999999
   return typeof product.partNumber === 'string' && product.partNumber.trim().length > 0
     && typeof product.description === 'string' && product.description.trim().length > 0
-    && typeof product.barcodeValue === 'string' && /^[\x20-\x7e]+$/.test(product.barcodeValue)
+    && typeof product.productBarcode === 'string' && /^[\x20-\x7e]*$/.test(product.productBarcode)
+    && typeof product.bulkBarcode === 'string' && /^[\x20-\x7e]*$/.test(product.bulkBarcode)
     && validQuantity(product.bulkFixedQuantity) && validQuantity(product.packageFixedQuantity)
     && (product.status === 'active' || product.status === 'inactive')
 }

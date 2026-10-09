@@ -30,7 +30,7 @@ export function getLabelRules(type: LabelType): LabelRules {
 }
 
 export function fixedQuantity(product: Product, type: LabelType): string {
-  return String(type === 'package-fixed' ? product.packageFixedQuantity : product.bulkFixedQuantity)
+  return String((type === 'package-fixed' ? product.packageFixedQuantity : product.bulkFixedQuantity) ?? '')
 }
 
 export interface LabelData {

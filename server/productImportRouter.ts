@@ -2,7 +2,7 @@ import { extname } from 'node:path'
 import type { DatabaseSync } from 'node:sqlite'
 import express, { type Request, type Response } from 'express'
 import multer from 'multer'
-import { importProducts, previewProductImport, WorkbookImportError } from './import/index.js'
+import { importProducts, inspectProductWorkbook, previewProductImport, WorkbookImportError } from './import/index.js'
 
 export const MAX_WORKBOOK_BYTES = 5 * 1024 * 1024
 
@@ -22,7 +22,7 @@ function uploadError(response: Response, error: unknown, reportError: (error: un
     || error.message.startsWith('Unsupported content type:')
   )
   if (error instanceof multer.MulterError || malformedUpload) {
-    response.status(400).json({ error: 'Upload one Excel workbook using the file field and an optional sheetName field.' })
+    response.status(400).json({ error: 'Upload one Excel workbook using the file field and optional sheetName and mapping fields.' })
     return
   }
   reportError(error)
@@ -34,7 +34,7 @@ function selectedSheet(request: Request): { valid: true; name?: string } | { val
   if (body === undefined) return { valid: true }
   if (!body || typeof body !== 'object' || Array.isArray(body)) return { valid: false }
   const fields = body as Record<string, unknown>
-  if (Object.keys(fields).some((field) => field !== 'sheetName')) return { valid: false }
+  if (Object.keys(fields).some((field) => field !== 'sheetName' && field !== 'mapping')) return { valid: false }
   if (!Object.hasOwn(fields, 'sheetName')) return { valid: true }
   const value = fields.sheetName
   if (typeof value !== 'string' || !value.trim() || [...value].length > 31
@@ -52,14 +52,15 @@ export function createProductImportRouter(db: DatabaseSync, options: ImportRoute
     limits: {
       fileSize: MAX_WORKBOOK_BYTES,
       files: 1,
-      fields: 1,
-      parts: 2,
+      fields: 2,
+      parts: 3,
       fieldNameSize: 100,
-      fieldSize: 128,
+      fieldSize: 4096,
     },
   }).single('file')
 
   for (const [path, processWorkbook] of [
+    ['/products/import/columns', (_db: DatabaseSync, buffer: Buffer, sheetName?: string) => inspectProductWorkbook(buffer, sheetName)],
     ['/products/import/preview', previewProductImport],
     ['/products/import', importProducts],
   ] as const) {
@@ -79,14 +80,25 @@ export function createProductImportRouter(db: DatabaseSync, options: ImportRoute
         }
         const sheet = selectedSheet(request)
         if (!sheet.valid) {
-          response.status(400).json({ error: 'Supply at most one valid sheetName (1–31 characters) and no other form fields.' })
+          response.status(400).json({ error: 'Supply at most one valid sheetName (1–31 characters) and an optional JSON mapping; no other form fields.' })
           return
         }
 
         const buffer = request.file.buffer
         const processUpload = async () => {
           try {
-            response.json(await processWorkbook(db, buffer, sheet.name))
+            let mapping: unknown
+            if (request.body?.mapping !== undefined) {
+              if (typeof request.body.mapping !== 'string') {
+                response.status(400).json({ error: 'Supply one JSON column mapping.' })
+                return
+              }
+              try { mapping = JSON.parse(request.body.mapping) } catch {
+                response.status(400).json({ error: 'Supply a valid JSON column mapping.' })
+                return
+              }
+            }
+            response.json(await processWorkbook(db, buffer, sheet.name, mapping))
           } catch (failure) {
             if (failure instanceof WorkbookImportError) {
               response.status(422).json({
