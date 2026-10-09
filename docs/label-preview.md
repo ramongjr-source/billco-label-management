@@ -9,13 +9,14 @@ labels are outside scope.
 | --- | --- | --- | --- | --- |
 | Bulk Fixed | 3 × 5 inches | Bulk Fixed Quantity, locked | Bulk Barcode | Description, PO, lot |
 | Bulk Variable | 3 × 5 inches | Operator entry | None | Description, PO, lot |
-| Package Fixed | 3 × 2 inches | Package Fixed Quantity, locked | Product Barcode | Lot |
-| BCC | 3 × 2 inches | Operator entry | None | Lot |
+| Package Fixed | 3 × 2 inches | Package Fixed Quantity, locked | Product Barcode | Description, lot |
+| BCC | 3 × 2 inches | Operator entry | None | Description, lot |
 
 Every label shows flat BILLCO CORPORATION branding and a boxed Part Number.
 Part Number is the largest text; description is the next priority on bulk
 labels, followed by quantity, PO, lot, and barcode. Compact labels emphasize
-Part Number, then quantity, lot, and barcode. Upright Arial/Helvetica typography,
+Part Number, then description, quantity, lot, and barcode. The compact Part
+Number area and typography retain their existing size. Upright Arial/Helvetica typography,
 square edges, and high contrast resemble industrial thermal output.
 
 Product Barcode and Bulk Barcode are separate imported values. Fixed previews
@@ -43,10 +44,13 @@ consistent across label types; height follows the 3:5 or 3:2 aspect ratio. The
 size caption indicates intended stock dimensions. Screen scaling does not
 calibrate physical inches or certify printer output or barcode scanability.
 
-Complete imported identifiers and descriptions are preserved. Text fitting
-responds to content, available space, and viewport changes without ellipses.
-Very long values use smaller text to fit, and the remaining fields scale to
-keep Part Number dominant; the application's existing data length limits apply.
+Complete imported identifiers are preserved. Part Number fitting responds to
+content, available space, and viewport changes. The existing 3x5 description
+fitting remains unchanged. For all 3x2 formats, nonblank descriptions wrap into
+at most two lines and truncate overflow with `...`; the full description is
+available on hover. Blank descriptions omit the heading and its allocated row.
+Other compact fields use the remaining space while preserving Part Number's
+size and prominence. Existing data length limits apply.
 
 ## Screenshots
 

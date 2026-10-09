@@ -90,8 +90,11 @@ Operators do not manually select label dimensions.
 - Lot Number
 - Quantity
 
-Bulk Fixed and Bulk Variable also display Description and PO Number.
-Package Fixed and BCC use the compact layout and omit Description and PO Number.
+All labels display Description when nonblank. Bulk Fixed and Bulk Variable also
+display PO Number. Package Fixed and BCC omit PO Number; their descriptions wrap
+to at most two lines and truncate overflow with `...`. Part Number retains its
+existing size and remains dominant, followed by Description, Quantity, Lot Number,
+and Barcode when applicable.
 
 Fixed-quantity labels shall also display:
 

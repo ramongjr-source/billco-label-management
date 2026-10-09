@@ -139,6 +139,15 @@ input[type="radio"], input[type="checkbox"] { width: 22px; height: 22px; accent-
 .compact-label .label-brand span { font-size: min(3cqw, calc(var(--part-font-size) * .25)); }
 .compact-label .label-quantity strong { font-size: min(11cqw, calc(var(--part-font-size) * .65)); }
 .compact-label.no-barcode { grid-template-rows: .3fr 1.25fr .55fr .55fr; }
+.compact-label.has-description { grid-template-rows: .27fr 1fr .68fr .25fr .2fr .35fr; gap: .9%; }
+.compact-label.has-description.no-barcode { grid-template-rows: .28fr 1.25fr .65fr .24fr .23fr; }
+.compact-label.has-description .label-description > span { font-size: min(2.2cqw, calc(var(--part-font-size) * .18)); }
+.compact-label.has-description .label-description strong { flex: none; font-size: min(5.8cqw, calc(var(--part-font-size) * .6)); line-height: 1.06; height: calc(2lh + 1px); max-height: calc(2lh + 1px); overflow: hidden; }
+.compact-label.has-description .label-quantity strong { font-size: min(5cqw, calc(var(--part-font-size) * .4)); }
+.compact-label.has-description .label-detail { flex-direction: row; align-items: center; gap: 2cqw; }
+.compact-label.has-description .label-detail strong { align-self: stretch; font-size: min(4.5cqw, calc(var(--part-font-size) * .3)); }
+.compact-label.has-description .barcode-group { gap: .4cqw; }
+.compact-label.has-description .barcode-value { font-size: min(2.6cqw, calc(var(--part-font-size) * .2)); }
 .empty-preview { width: 100%; max-width: 435px; aspect-ratio: 3 / 5; color: #5c6879; text-align: center; padding: 25px; }
 .empty-preview h3 { font-size: 25px; font-weight: 600; }
 .empty-preview p { font-size: 18px; }

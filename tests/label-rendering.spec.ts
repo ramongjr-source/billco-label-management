@@ -39,11 +39,10 @@ async function verifyThermalLabel(label: Locator, height: number, part: string, 
     expect(text.transform).toBe('none')
   }
   expect(style.part).toBeGreaterThan(await label.locator('.label-quantity strong').evaluate((node) => parseFloat(getComputedStyle(node).fontSize)))
+  await expect(label.locator('.label-description strong')).toHaveText('HEX HEAD PIPE PLUG 1/2')
   if (height === 2) {
-    await expect(label.locator('.label-description')).toHaveCount(0)
     await expect(label.locator('.label-po')).toHaveCount(0)
   } else {
-    await expect(label.locator('.label-description strong')).toHaveText('HEX HEAD PIPE PLUG 1/2')
     await expect(label.locator('.label-po strong')).toHaveText('PO-123')
   }
   if (barcode) {
@@ -85,7 +84,7 @@ for (const mode of [
   })
 }
 
-test('fits complete long imported identifiers and descriptions at desktop and mobile sizes', async ({ page, request }) => {
+test('preserves long Part Numbers and keeps label text within desktop and mobile bounds', async ({ page, request }) => {
   const part = `${randomUUID()}-ABCDEFGHIJKLMNOPQRSTUVWXYZ0`
   const description = 'LONG IMPORTED DESCRIPTION WITH DIMENSIONS AND MATERIAL '.repeat(10).slice(0, 512)
   await importProduct(request, part, description)
@@ -111,3 +110,71 @@ test('fits complete long imported identifiers and descriptions at desktop and mo
     }
   }
 })
+
+for (const mode of [
+  { name: 'Package Fixed Qty', barcode: '000123456789' },
+  { name: 'BCC', barcode: null },
+]) {
+  test(`${mode.name} wraps descriptions into two lines and truncates overflow without shrinking Part Number`, async ({ page, request }) => {
+    const part = `PA-${randomUUID().slice(0, 4)}`
+    const longPart = `PB-${randomUUID().slice(0, 4)}`
+    const description = '6061 ALUMINUM TT FULL COUPLINGS'
+    const longDescription = 'BLK EXTRA HEAVY MALLEABLE FITTINGS WITH ADDITIONAL SPECIFICATIONS '.repeat(6).trim()
+    await importProduct(request, part, description)
+    await importProduct(request, longPart, longDescription)
+    await page.goto('/')
+    await expect(page.getByLabel('Description', { exact: true })).toHaveValue('3/8 Brass Coupling')
+    await page.getByRole('radio', { name: mode.name, exact: true }).check()
+    await page.getByRole('textbox', { name: 'Part Number', exact: true }).fill(part)
+    await expect(page.getByLabel('Description', { exact: true })).toHaveValue(description)
+    if (!mode.barcode) await page.getByRole('spinbutton', { name: 'Quantity', exact: true }).fill('35')
+    const label = page.locator('.product-label').first()
+    const partSize = () => label.locator('.label-part strong').evaluate((node) => parseFloat(getComputedStyle(node).fontSize))
+    // Compare against the existing compact grid, with the description area removed.
+    const priorSize = await label.evaluate((node) => {
+      node.classList.remove('has-description')
+      const description = node.querySelector<HTMLElement>('.label-description')!
+      description.style.display = 'none'
+      return new Promise<number>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => {
+        const size = parseFloat(getComputedStyle(node.querySelector('.label-part strong')!).fontSize)
+        node.classList.add('has-description')
+        description.style.display = ''
+        resolve(size)
+      })))
+    })
+    await expect.poll(partSize).toBeGreaterThanOrEqual(priorSize)
+    for (const width of [1536, 390]) {
+      await page.setViewportSize({ width, height: 1024 })
+      const value = label.locator('.label-description strong')
+      await expect(value).toHaveText(description)
+      await expect.poll(() => value.evaluate((node) => {
+        const range = document.createRange()
+        range.selectNodeContents(node)
+        return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size
+      })).toBe(2)
+      if (mode.barcode) await expect(label.locator('.barcode-value')).toHaveText(mode.barcode)
+      else await expect(label.locator('.barcode-group')).toHaveCount(0)
+    }
+    await page.getByRole('textbox', { name: 'Part Number', exact: true }).fill(longPart)
+    await expect(page.getByLabel('Description', { exact: true })).toHaveValue(longDescription)
+    const value = label.locator('.label-description strong')
+    await expect(value).toHaveText(/\.\.\.$/)
+    const displayed = (await value.textContent())!
+    expect(longDescription.startsWith(displayed.slice(0, -3).trimEnd())).toBe(true)
+    await expect(value).toHaveAttribute('title', longDescription)
+    await expect.poll(() => value.evaluate((node) => {
+      const range = document.createRange()
+      range.selectNodeContents(node)
+      return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size
+    })).toBe(2)
+    expect(await partSize()).toBeGreaterThan(await value.evaluate((node) => parseFloat(getComputedStyle(node).fontSize)))
+    const barcodeRects = await label.locator('.barcode rect').count()
+    if (mode.barcode) expect(barcodeRects).toBeGreaterThan(10)
+    else expect(barcodeRects).toBe(0)
+    await page.getByRole('button', { name: 'Expand label preview' }).click()
+    const expanded = page.getByRole('dialog').locator('.product-label')
+    await expect(expanded.locator('.label-description strong')).toHaveText(/\.\.\.$/)
+    if (mode.barcode) await expect(expanded.locator('.barcode-value')).toHaveText(mode.barcode)
+    else await expect(expanded.locator('.barcode-group')).toHaveCount(0)
+  })
+}
