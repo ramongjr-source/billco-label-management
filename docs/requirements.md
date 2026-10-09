@@ -87,11 +87,25 @@ Operators do not manually select label dimensions.
 ## Required Label Fields
 
 - Part Number
-- Description
-- PO Number
 - Lot Number
 - Quantity
 
+Bulk Fixed and Bulk Variable also display Description and PO Number.
+Package Fixed and BCC use the compact layout and omit Description and PO Number.
+
 Fixed-quantity labels shall also display:
 
-- Barcode
+- Product Barcode on Package Fixed
+- Bulk Barcode on Bulk Fixed
+
+## Preview Rendering
+
+- Use imported database fields, with no generated or substituted barcodes.
+- Make Part Number the largest text on every label; Quantity must be smaller.
+- Use flat BILLCO CORPORATION branding, black ink, white stock, and upright
+  industrial typography. Exclude addresses, websites, and decorative graphics.
+- Show proportional 3x5 or 3x2 previews and the matching size caption.
+- Update automatically on label type, Part Number, quantity, PO, or lot edits.
+- Missing bulk quantity or barcode affects only Bulk Fixed availability.
+- Render previews only; printing, SATO integration, PDF generation, customer
+  labels, pallet placards, and Will Call labels are outside this implementation.
