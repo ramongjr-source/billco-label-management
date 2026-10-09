@@ -6,7 +6,6 @@ import { WorkbookImportError } from './errors.js'
 import { validateWorkbookArchive } from './zip.js'
 
 const MAX_DATA_ROWS = 5000
-const MAX_COLUMNS = 64
 const MAX_HEADER_ROWS = MAX_DATA_ROWS + 1
 
 type Field = 'partNumber' | 'description' | 'bulkFixedQuantity' | 'packageFixedQuantity' | 'barcodeValue' | 'status'
@@ -64,11 +63,16 @@ function isBlank(value: ExcelJS.CellValue): boolean {
   return text !== undefined && !text.trim()
 }
 
-function rowIsBlank(row: ExcelJS.Row, columns: number): boolean {
-  for (let column = 1; column <= columns; column += 1) {
-    if (!isBlank(row.getCell(column).value)) return false
+function rowIsBlank(row: ExcelJS.Row, columns?: Iterable<number>): boolean {
+  if (columns) {
+    for (const column of columns) {
+      if (!isBlank(row.getCell(column).value)) return false
+    }
+    return true
   }
-  return true
+  let blank = true
+  row.eachCell((cell) => { if (!isBlank(cell.value)) blank = false })
+  return blank
 }
 
 function text(cell: ExcelJS.Cell): string {
@@ -131,12 +135,9 @@ export async function parseProductWorkbook(buffer: Buffer, requestedSheet?: stri
   if (lastRow > MAX_HEADER_ROWS + MAX_DATA_ROWS) {
     throw new WorkbookImportError('The worksheet exceeds the 5000 data-row limit.', sheetNames)
   }
-  const columns = Math.max(sheet.columnCount, sheet.columns?.length ?? 0)
-  if (columns > MAX_COLUMNS) throw new WorkbookImportError('The worksheet exceeds the 64-column limit.', sheetNames)
-
   let headerRow = 0
   for (let row = 1; row <= Math.min(lastRow, MAX_HEADER_ROWS); row += 1) {
-    if (!rowIsBlank(sheet.getRow(row), columns)) {
+    if (!rowIsBlank(sheet.getRow(row))) {
       headerRow = row
       break
     }
@@ -147,25 +148,21 @@ export async function parseProductWorkbook(buffer: Buffer, requestedSheet?: stri
   }
 
   const headers = new Map<Header, number>()
-  const mappedColumns = new Set<number>()
-  for (let column = 1; column <= columns; column += 1) {
-    const cell = sheet.getRow(headerRow).getCell(column)
-    if (isFormula(cell.value)) throw new WorkbookImportError('Header formulas are not supported; use text headers.', sheetNames)
+  sheet.getRow(headerRow).eachCell((cell, column) => {
     let headerText: string
     try {
       headerText = typeof cell.value === 'number' ? String(cell.value) : text(cell)
     } catch {
-      continue // Unrecognized extra columns do not need a text header.
+      return // Unrelated columns, including formula headers, are ignored.
     }
     const normalized = headerText.trim().replace(/[\s_]+/g, '').toLowerCase()
     const canonical = Object.hasOwn(aliases, normalized) ? aliases[normalized] : undefined
-    if (!canonical) continue
+    if (!canonical) return
     if (headers.has(canonical)) {
       throw new WorkbookImportError(`Duplicate header for ${label(canonical)}. Keep one column for each field.`, sheetNames)
     }
     headers.set(canonical, column)
-    mappedColumns.add(column)
-  }
+  })
   const required: Field[] = ['partNumber', 'bulkFixedQuantity', 'packageFixedQuantity', 'barcodeValue', 'status']
   const missing = required.filter((field) => !headers.has(field)).map((field) => fieldLabels[field])
   if (!headers.has('description') && ![1, 2, 3, 4, 5].some((index) => headers.has(`description${index}` as Header))) {
@@ -177,7 +174,7 @@ export async function parseProductWorkbook(buffer: Buffer, requestedSheet?: stri
   let blankRows = 0
   for (let rowNumber = headerRow + 1; rowNumber <= lastRow; rowNumber += 1) {
     const row = sheet.getRow(rowNumber)
-    if (rowIsBlank(row, columns)) {
+    if (rowIsBlank(row, headers.values())) {
       blankRows += 1
       continue
     }
@@ -228,12 +225,6 @@ export async function parseProductWorkbook(buffer: Buffer, requestedSheet?: stri
         addError(fieldLabels.status, 'Status must be Active or Inactive.')
       }
     }
-    for (let column = 1; column <= columns; column += 1) {
-      if (!mappedColumns.has(column) && isFormula(row.getCell(column).value)) {
-        addError(`Column ${column}`, 'Formulas are not supported; replace this cell with its value.')
-      }
-    }
-
     const product: Product = {
       partNumber,
       description,

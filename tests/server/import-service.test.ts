@@ -170,7 +170,7 @@ test('rich text and numeric zero-padding preserve direct identifiers while unsaf
   assert.ok(preview.errors.every((error) => /text|safe integer|format/.test(error.message)))
 })
 
-test('formula cells are errors even when they have cached values or appear under unknown prototype-name headers', async (t) => {
+test('required-field formulas are errors, while unrelated formulas and prototype-name headers are ignored', async (t) => {
   const db = database(t)
   const buffer = await workbook([
     [{ formula: '1+1', result: 2 }, ...valid.slice(1), 'ordinary', 'ordinary'],
@@ -179,10 +179,10 @@ test('formula cells are errors even when they have cached values or appear under
     ['GOOD', ...valid.slice(1), 'ordinary', 'ordinary'],
   ], [...headers, 'constructor', 'constructor'])
   const preview = await previewProductImport(db, buffer)
-  assert.equal(preview.invalidRows, 3)
-  assert.equal(preview.added, 1)
+  assert.equal(preview.invalidRows, 2)
+  assert.equal(preview.added, 2)
   assert.ok(preview.errors.every((error) => /Formulas/.test(error.message)))
-  assert.equal(preview.errors.find((error) => error.row === 4)?.field, 'Column 7')
+  assert.deepEqual(preview.rows.map((row) => row.product.partNumber), ['EXTRAFORMULA', 'GOOD'])
 })
 
 test('missing or duplicate canonical headers report available worksheets; another worksheet can be selected', async (t) => {
@@ -206,18 +206,48 @@ test('missing or duplicate canonical headers report available worksheets; anothe
   formulaHeader[0] = { formula: '"Part Number"', result: 'Part Number' }
   const formulaWorkbook = new ExcelJS.Workbook()
   formulaWorkbook.addWorksheet('Products').addRow(formulaHeader)
-  await assert.rejects(previewProductImport(db, Buffer.from(await formulaWorkbook.xlsx.writeBuffer())), /Header formulas/)
+  await assert.rejects(previewProductImport(db, Buffer.from(await formulaWorkbook.xlsx.writeBuffer())), /Missing required headers/)
 })
 
-test('row and column limits reject oversized ranges before per-row processing', async (t) => {
+test('row limits reject oversized ranges before per-row processing', async (t) => {
   const db = database(t)
-  for (const [row, column, message] of [[5002, 1, /5000 data-row/], [2, 65, /64-column/], [1000000, 1, /5000 data-row/]] as const) {
+  for (const [row, column, message] of [[5002, 1, /5000 data-row/], [1000000, 1, /5000 data-row/]] as const) {
     const file = new ExcelJS.Workbook()
     const sheet = file.addWorksheet('Products')
     sheet.addRow(headers)
     sheet.getCell(row, column).value = 'range limit'
     await assert.rejects(previewProductImport(db, Buffer.from(await file.xlsx.writeBuffer())), message)
   }
+})
+
+test('wide sparse worksheets map required fields beyond column 64 and ignore unrelated data and formatting', async (t) => {
+  const db = database(t)
+  const file = new ExcelJS.Workbook()
+  const sheet = file.addWorksheet('Wide master')
+  const positions = [2, 75, 131, 220, 300, 512]
+  headers.forEach((header, index) => sheet.getRow(1).getCell(positions[index]).value = header)
+  sheet.getCell(1, 1024).value = { formula: '"Unrelated header"', result: 'Unrelated header' }
+  sheet.getColumn(16384).width = 20
+  const rows = [valid, ['5080', 'Updated coupling', 250, 25, 'DIRECT-UPDATE', 'Inactive']]
+  rows.forEach((values, index) => {
+    values.forEach((value, field) => sheet.getRow(index + 2).getCell(positions[field]).value = value)
+    sheet.getCell(index + 2, 1024).value = { formula: '1/0', result: { error: '#DIV/0!' } }
+  })
+  sheet.getCell(4, 1024).value = 'Unrelated-only row'
+  const buffer = Buffer.from(await file.xlsx.writeBuffer())
+  const preview = await previewProductImport(db, buffer)
+  assert.equal(preview.added, 1)
+  assert.equal(preview.updated, 1)
+  assert.equal(preview.invalidRows, 0)
+  assert.equal(preview.blankRows, 1)
+  assert.equal(findProductByPartNumber(db, 'NEW-001'), undefined)
+  const result = await importProducts(db, buffer)
+  assert.equal(result.added, 1)
+  assert.equal(result.updated, 1)
+  assert.deepEqual(result.errors, [])
+  assert.equal(findProductByPartNumber(db, 'NEW-001')?.barcodeValue, 'DIRECT-0001')
+  assert.equal(findProductByPartNumber(db, '5080')?.description, 'Updated coupling')
+  assert.equal(findProductByPartNumber(db, '5080')?.status, 'inactive')
 })
 
 test('commit recomputes add/update counts and rolls back all valid rows on an unexpected database failure', async (t) => {
