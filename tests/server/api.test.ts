@@ -34,7 +34,8 @@ test('HTTP lookup returns database quantities, a single description, and the ind
     description: 'BRASS COUPLING 3/8',
     bulkFixedQuantity: 120,
     packageFixedQuantity: 12,
-    barcodeValue: 'BILLCO-5083',
+    productBarcode: 'BILLCO-5083',
+    bulkBarcode: 'BILLCO-BULK-5083',
     status: 'active',
   })
 })
@@ -43,7 +44,7 @@ test('HTTP lookup trims input but preserves exact case and leading zeros', async
   const { db, url } = await startApi(t)
   db.prepare(`
     INSERT INTO products
-      (part_number, description, bulk_fixed_quantity, package_fixed_quantity, barcode_value, status)
+      (part_number, description, bulk_fixed_quantity, package_fixed_quantity, product_barcode, status)
     VALUES (?, ?, ?, ?, ?, ?)
   `).run('000Case', 'Leading zeros', 8, 2, 'CASE-CODE', 'active')
   const response = await fetch(`${url}/api/products?partNumber=${encodeURIComponent(' 000Case ')}`)
@@ -55,7 +56,7 @@ test('HTTP lookup trims input but preserves exact case and leading zeros', async
   const unicodePart = '😀'.repeat(64)
   db.prepare(`
     INSERT INTO products
-      (part_number, description, bulk_fixed_quantity, package_fixed_quantity, barcode_value, status)
+      (part_number, description, bulk_fixed_quantity, package_fixed_quantity, product_barcode, status)
     VALUES (?, ?, ?, ?, ?, ?)
   `).run(unicodePart, 'Unicode textual part number', 8, 2, 'UNICODE-CODE', 'active')
   assert.equal((await fetch(`${url}/api/products?partNumber=${encodeURIComponent(unicodePart)}`)).status, 200)

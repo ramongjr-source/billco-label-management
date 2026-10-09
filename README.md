@@ -47,9 +47,11 @@ seed products without replacing existing records. See
 persistence, backups, and initialization details.
 
 Use **Database → Import Master List** in the sidebar to import an `.xlsx`
-product master. Select **Validate workbook** to preview the first worksheet and
-see available worksheets. To use another worksheet, select it and validate
-again. Review the preview, then select **Import valid rows** to save. The preview
+product master. **BillcoMaster** in **Billco_App_Master.xlsx** is the primary
+source and is selected automatically when present. Upload reads the worksheet
+headers and preselects the Billco column mapping. Review or edit mappings, then
+select **Validate workbook** and **Import valid rows**. Choose another product
+worksheet to refresh its detected columns and mapping. The preview
 makes no database changes. Import
 adds new products, updates matching part numbers, and reports invalid and blank
 rows that were skipped. Existing part numbers match exactly after trimming,
@@ -76,7 +78,7 @@ npm run test:e2e     # Browser tests for API lookup, label rules, and mobile
 Production startup applies migrations but does not seed products. Initialize
 the selected database with `npm run db:setup` only when the development samples
 are appropriate, or supply the intended product records separately. Form state
-(PO, lot, label type, and editable quantity) remains local to the browser session.
+(PO, lot, label type, column mapping, and editable quantity) remains local to the browser session.
 
 For an existing Chromium installation, set
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to its executable when running tests.
@@ -124,7 +126,8 @@ Maintain a master list of products including:
 
 - Part Number
 - Description
-- Barcode Value
+- Product Barcode
+- Bulk Barcode
 - Bulk Fixed Quantity
 - Package Fixed Quantity
 - Status (Active/Inactive)
@@ -141,8 +144,10 @@ worksheet are all invalid.
 
 Provide a combined Description or legacy Description1 through Description5
 columns; nonempty legacy values are joined with spaces into one description.
-Barcode Value comes directly from the spreadsheet and is independent of Part
-Number. Format identifiers as Text to preserve leading zeros. See
+ProductBarcode and BulkBarcode come directly from the spreadsheet and are
+independent of Part Number and each other. Bulk Fixed uses BulkBarcode; Package
+Fixed uses ProductBarcode. Missing fixed quantities or barcodes leave that label
+type unavailable, while editable-quantity labels remain usable. Format identifiers as Text to preserve leading zeros. See
 [`docs/excel-import.md`](docs/excel-import.md) for the complete template and rules.
 
 ---

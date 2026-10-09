@@ -65,7 +65,7 @@ test('uses database product fields for the description, fixed quantities, and in
     description: 'BRASS COUPLING 3/8',
     bulkFixedQuantity: 120,
     packageFixedQuantity: 12,
-    barcodeValue: 'BILLCO-5083',
+    productBarcode: 'BILLCO-5083',
     status: 'active',
   })
   await expect(page.getByRole('textbox', { name: 'Part Number', exact: true })).toHaveValue('5083')
@@ -74,8 +74,8 @@ test('uses database product fields for the description, fixed quantities, and in
   const preview = page.getByRole('region', { name: 'Label Preview', exact: true })
   await expect(preview.locator('.label-description strong')).toHaveText('BRASS COUPLING 3/8')
   await expect(preview.locator('.label-part strong')).toHaveText('5083')
-  await expect(preview.locator('.barcode-value')).toHaveText('BILLCO-5083')
-  await expect(preview.getByRole('img', { name: 'Code 128 barcode for BILLCO-5083' })).toBeVisible()
+  await expect(preview.locator('.barcode-value')).toHaveText('BILLCO-BULK-5083')
+  await expect(preview.getByRole('img', { name: 'Code 128 barcode for BILLCO-BULK-5083' })).toBeVisible()
   const quantity = page.getByRole('spinbutton', { name: 'Quantity', exact: true })
   await expect(quantity).toHaveValue('120')
   await expect(quantity).toHaveAttribute('readonly', '')
@@ -167,7 +167,7 @@ test('keeps the newer lookup when an older response arrives later', async ({ pag
   await expect(page.getByRole('textbox', { name: 'Part Number', exact: true })).toHaveValue('5083')
   await expect(page.getByLabel('Description', { exact: true })).toHaveValue('BRASS COUPLING 3/8')
   await expect(page.getByRole('spinbutton', { name: 'Quantity', exact: true })).toHaveValue('120')
-  await expect(page.locator('.barcode-value').first()).toHaveText('BILLCO-5083')
+  await expect(page.locator('.barcode-value').first()).toHaveText('BILLCO-BULK-5083')
 })
 
 for (const mode of [

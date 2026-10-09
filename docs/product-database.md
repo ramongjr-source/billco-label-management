@@ -13,9 +13,10 @@ The API and UI share the same TypeScript product shape:
 | --- | --- | --- |
 | `partNumber` | Text | Unique, nonblank, trimmed, control-free, at most 64 characters; exact case-sensitive identity |
 | `description` | Text | Single combined, nonblank description, at most 512 characters |
-| `bulkFixedQuantity` | Integer | 1–999999 |
-| `packageFixedQuantity` | Integer | 1–999999 |
-| `barcodeValue` | Text | Nonblank printable ASCII, at most 128 characters |
+| `bulkFixedQuantity` | Integer or null | 1–999999 when present; null means unavailable |
+| `packageFixedQuantity` | Integer or null | 1–999999 when present; null means unavailable |
+| `productBarcode` | Text | Printable ASCII, at most 128 characters; empty means unavailable |
+| `bulkBarcode` | Text | Independent printable ASCII, at most 128 characters; empty means unavailable |
 | `status` | Text | `active` or `inactive` |
 
 Part numbers remain text throughout storage and lookup. A part such as `005080`
@@ -52,16 +53,16 @@ records and does not overwrite edited master values or reset statuses.
 
 The development database starts with these examples:
 
-| Part | Status | Bulk fixed quantity | Package fixed quantity | Barcode value |
-| --- | --- | --- | --- | --- |
-| `5080` | active | 500 | 50 | `5080` |
-| `5081` | active | 250 | 25 | `5081` |
-| `5082` | active | 200 | 20 | `5082` |
-| `5083` | active | 120 | 12 | `BILLCO-5083` |
-| `5090` | inactive | 100 | 10 | `5090` |
+| Part | Status | Bulk fixed quantity | Package fixed quantity | Product barcode | Bulk barcode |
+| --- | --- | --- | --- | --- | --- |
+| `5080` | active | 500 | 50 | `5080` | `5080` |
+| `5081` | active | 250 | 25 | `5081` | `5081` |
+| `5082` | active | 200 | 20 | `5082` | `5082` |
+| `5083` | active | 120 | 12 | `BILLCO-5083` | `BILLCO-BULK-5083` |
+| `5090` | inactive | 100 | 10 | `5090` | `5090` |
 
-Part `5083` has the combined description `BRASS COUPLING 3/8` and a barcode
-value that differs from the part number. Part `5090` demonstrates
+Part `5083` has the combined description `BRASS COUPLING 3/8` and distinct
+product and bulk barcodes that differ from the part number. Part `5090` demonstrates
 inactive-product handling: its stored quantities are available in the API
 response, but the UI does not use them for labels. These records support local
 development; they are not a production product master.
@@ -93,7 +94,8 @@ local database.
   "description": "3/8 Brass Coupling",
   "bulkFixedQuantity": 500,
   "packageFixedQuantity": 50,
-  "barcodeValue": "5080",
+  "productBarcode": "5080",
+  "bulkBarcode": "5080",
   "status": "active"
 }
 ```
@@ -120,7 +122,12 @@ available or `503` when unavailable.
 
 The initial `5080` lookup and subsequent searches use the API. Bulk Fixed uses
 `bulkFixedQuantity`; Package Fixed uses `packageFixedQuantity`. Both quantities
-are locked, and their Code 128 barcodes encode `barcodeValue`.
+are locked. Bulk Fixed encodes `bulkBarcode`; Package Fixed encodes
+`productBarcode`. A fixed preview is unavailable when its quantity or matching
+barcode is absent; no field is substituted from the other label type.
+Missing bulk quantity or bulk barcode affects only Bulk Fixed. The product
+remains available for Package Fixed when its package fields are present, and
+for BCC and Bulk Variable with an operator-entered quantity.
 
 The four label types are mutually exclusive:
 
@@ -145,8 +152,9 @@ authentication or role-based restriction on this local lookup endpoint.
 
 **Database → Import Master List** opens the `.xlsx` importer. Its validation
 preview reads product records to classify rows as additions or updates without
-writing to the database. Use **Validate workbook** to discover worksheets and
-preview the first one; choose another worksheet and validate again if needed.
+writing to the database. Upload a workbook to discover its worksheets and
+headers; BillcoMaster is selected when present. Review the editable column
+mapping and use **Validate workbook** to preview the selected worksheet.
 The explicit **Import valid rows** action saves valid rows in one
 transaction and reports invalid and blank rows that were skipped. Database
 failures roll back the valid batch.
@@ -155,12 +163,17 @@ An imported, trimmed Part Number updates its exact, case-sensitive match;
 otherwise a new product is inserted. Leading zeros remain part of a text
 identifier. Duplicate part numbers within the selected worksheet invalidate
 every matching row. The spreadsheet supplies quantities, the single combined
-description, Barcode Value, and Active/Inactive status. Barcode Value is stored
-independently and is not derived from Part Number or Description.
+description, Product Barcode, Bulk Barcode, and optional Active/Inactive status.
+Both barcodes are independent source data, never derived from Part Number,
+Description, or one another. Without a Status column, additions default to active
+and updates retain their current status. Blank mapped quantities become null;
+blank mapped barcodes become empty strings.
 
 The preview and import endpoints are `POST /api/products/import/preview` and
 `POST /api/products/import`. Both accept an `.xlsx` file in the multipart `file`
-field and an optional `sheetName`. Import is the write operation; it revalidates
+field, optional `sheetName`, and an optional JSON `mapping`.
+`POST /api/products/import/columns` discovers headers and suggested mappings
+without reading or writing products. BillcoMaster is preferred by default. Import is the write operation; it revalidates
 the submitted workbook before saving. See [`excel-import.md`](excel-import.md)
 for the full workbook contract, limits, and response details.
 
@@ -212,3 +225,14 @@ setup and startup never perform this reset or overwrite existing products.
 Excel master-list import supports product additions and updates. A general
 product-editing interface, customer database management, authentication,
 printing, SATO integration, and reporting remain outside the implemented scope.
+
+## Existing database upgrade
+
+Migration `002-separate-barcodes.sql` rebuilds the strict products table in the
+migration transaction, preserving every existing product, quantity, description,
+status, and legacy barcode. The former `barcode_value` becomes `product_barcode`;
+`bulk_barcode` initially remains empty because its value cannot be inferred.
+Reimport BillcoMaster to populate actual bulk codes. Quantities may now be null
+and barcode values may be empty to represent missing fixed-label master data.
+Setup does not overwrite existing rows, and the migration runs once.
+The lookup API replaces `barcodeValue` with `productBarcode` and `bulkBarcode`.

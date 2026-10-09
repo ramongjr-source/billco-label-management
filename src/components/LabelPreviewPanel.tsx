@@ -32,7 +32,7 @@ function ProductLabel({ data, rules }: { data: LabelData; rules: LabelRules }) {
       <LabelDetail name="PO" value={data.poNumber} />
       <LabelDetail name="LOT" value={data.lotNumber} />
       <div className="label-quantity flex items-baseline gap-6"><span>QTY:</span><strong>{data.quantity || '—'}</strong></div>
-      {rules.showBarcode && <Barcode value={data.product.barcodeValue} />}
+      {rules.showBarcode && <Barcode value={rules.height === 5 ? data.product.bulkBarcode : data.product.productBarcode} />}
     </div>
   )
 }

@@ -1,153 +1,126 @@
-# Excel product import
+# Excel product import and column mapping
 
-Import a product master from an `.xlsx` workbook using **Database → Import
-Master List** in the sidebar. The application validates the selected worksheet
-and previews additions, updates, and row errors before any database write.
-An explicit **Import valid rows** action saves the valid rows to SQLite.
+Use **Database → Import Master List** to upload a product `.xlsx` workbook.
+**BillcoMaster** in **Billco_App_Master.xlsx** is the primary import source. When
+present, BillcoMaster is selected even if it is not the first worksheet.
+Customer imports, customer labels, printing, SATO integration, reporting, and
+authentication are outside scope.
 
 ## Operator workflow
 
-1. Choose an `.xlsx` file.
-2. Select **Validate workbook** to preview the first worksheet and discover the
-   workbook's available worksheets.
-3. To import another worksheet, select it in **Worksheet**, then select
-   **Validate workbook** again. Changing the worksheet clears its previous
-   preview.
-4. Review the validation preview, including proposed additions/updates and
-   skipped invalid or blank rows. Preview does not save products.
-5. Select **Import valid rows** to commit the valid rows. Review the resulting
-   counts and errors; correct skipped rows in the workbook before importing
-   them again.
+1. Choose a workbook. The application reads headers without saving products.
+2. Review the detected columns and suggested mappings. BillcoMaster maps the
+   production fields below automatically. Other product worksheets may use any
+   header names; select their columns manually.
+3. Map one description column or up to five ordered description fragments.
+   Nonempty fragments are trimmed and joined with spaces. Numeric fragments are
+   retained as text. Legacy Description1–Description5 columns are suggested in
+   numeric order when present.
+4. Select **Validate workbook** to preview additions, updates, and row errors.
+5. Select **Import valid rows** to save. Review the counts and correct skipped
+   rows in the source workbook before importing them again.
 
-Changing the file or worksheet requires a new preview. Import revalidates the
-workbook and uses current database records to identify additions and updates.
-All valid rows save in one transaction. A database failure rolls back that
-batch; row validation errors allow the remaining valid rows to be imported.
+Changing the file, worksheet, or mapping clears the preview and requires new
+validation. Import sends the same selected columns and reparses/revalidates the
+workbook. All valid writes commit together; unexpected database failures roll
+back the batch. Products absent from the worksheet are retained.
 
-New part numbers are added. Existing part numbers are updated with the workbook
-values, including Active/Inactive status. Matching trims surrounding whitespace
-and preserves exact case and leading zeros: `005080` differs from `5080`, and
-`ABC-1` differs from `abc-1`. Products absent from the workbook are retained.
+## Primary source mapping
 
-## Workbook columns
-
-The first nonblank worksheet row is the header row. Header matching accepts
-case, spacing, underscore, and camel-case variations of the supported names,
-such as `Part Number`, `part_number`, and `partNumber`.
-The `PN` header is also accepted for Part Number. There is no importer limit on
-total worksheet columns. Unrecognized columns are ignored, including their
-values, formulas, and formatting. Required fields may appear anywhere in the
-worksheet. Duplicate recognized headers, including aliases for the same field,
-reject the worksheet.
-
-| Column | Required | Value |
+| BillcoMaster column | Stored product field | Used by |
 | --- | --- | --- |
-| Part Number | Yes | Unique text identifier, 1–64 characters |
-| Description | One description source | Combined, nonblank description, at most 512 characters |
-| Description1 through Description5 | Alternative description source | Nonempty fragments joined in numeric order with spaces |
-| Bulk Fixed Quantity | Yes | Whole number from 1 to 999999 |
-| Package Fixed Quantity | Yes | Whole number from 1 to 999999 |
-| Barcode Value | Yes | Nonblank printable ASCII text, at most 128 characters |
-| Status | Yes | Active or Inactive, ignoring capitalization and surrounding whitespace |
+| BillcoPart# | Part Number | Exact product lookup |
+| Description | Description | All product labels |
+| StdPackQty | Package Fixed Quantity | Package Fixed |
+| BulkQty | Bulk Fixed Quantity | Bulk Fixed |
+| ProductBarcode | Product Barcode | Package Fixed only |
+| BulkBarcode | Bulk Barcode | Bulk Fixed only |
 
-You may supply Description, legacy Description1 through Description5 columns,
-or both. Empty legacy fragments are omitted and the remaining fragments are
-trimmed and joined with a single space. For example, Description1
-`BRASS COUPLING` and Description2 `3/8` become `BRASS COUPLING 3/8`.
-Finite numeric description cells are converted to text as well, so a numeric
-dimension such as `0.375` or a `0` fragment is retained. Use Text cells when
-description formatting or fraction notation must be preserved.
+`Size` and other unrelated columns are ignored. There is no importer cap on
+total worksheet columns. Values, formulas, and formatting in unmapped columns
+are ignored. Rows empty in all mapped fields are counted as blank, even if
+unrelated columns contain data.
 
-If a row supplies both a direct Description and nonempty legacy fragments, the
-direct value must equal the consolidated value after trimming. Conflicting
-descriptions invalidate that row. The database stores one description field.
+Optional Status accepts Active or Inactive, ignoring case and surrounding
+whitespace. Without a Status mapping, new products are active and existing
+products retain their status. No customer records or customer labels are saved.
 
-Example worksheet:
+## Validation and missing values
 
-| Part Number | Description1 | Description2 | Bulk Fixed Quantity | Package Fixed Quantity | Barcode Value | Status |
-| --- | --- | --- | --- | --- | --- | --- |
-| 005083 | BRASS COUPLING | 3/8 | 120 | 12 | BILLCO-005083 | Active |
+Part Number and Description must be nonblank. Part Number is trimmed,
+control-free text of at most 64 characters; Description is at most 512 characters.
+Part Number matches are exact and case-sensitive: `005080` differs from `5080`
+and `ABC` differs from `abc`. Every duplicate occurrence within one worksheet is
+invalid, including a duplicate row with another field error.
 
-In Excel, format the Part Number and Barcode Value cells as **Text** before
-entering values. This reliably preserves the example's `005083` identifier.
+Fixed quantity columns must be mapped and populated quantities must be whole
+numbers from 1 to 999999. Blank quantities are stored as null. Barcode values
+are independent source data; populated codes must be printable ASCII of at most
+128 characters. Blank codes remain empty. A product missing a fixed quantity
+or its matching barcode cannot preview that fixed label. Bulk Variable and BCC
+remain available for operator quantity entry and never show barcodes.
 
-## Identifier, formula, and row rules
+Neither barcode is generated from Part Number, inferred from quantity, nor copied
+from the other barcode. Text codes preserve leading zeros and meaningful spaces.
+Format identifiers as Text before entering values in Excel. Numeric identifier
+cells require safe integers of at most 15 digits and General or plain all-zero
+formats such as `000000`; those formats preserve their displayed zero padding.
+Values already rounded by Excel cannot be recovered.
 
-Barcode Value is read directly from the spreadsheet and stored independently
-from the part number and description. The importer never creates it from a
-part number. Text barcode cells are preserved exactly, including spaces and
-leading zeros, subject to the nonblank printable ASCII requirement. Use Text
-cells for both identifiers, especially values with leading zeros or long
-numeric strings.
+Formula cells in mapped fields are unsupported; use **Paste Special → Values**.
+Dates and unsupported cell types in mapped fields are reported as errors.
+The importer does not execute formulas or trust cached formula results.
+Mappings use one-based column indices. A column can be selected only once,
+including description fragments. Missing mappings, nonexistent columns, and
+invalid mappings reject validation without database writes.
 
-Numeric identifier cells are accepted only for safe whole numbers with at most
-15 decimal digits, using General or a plain all-zero number format such as
-`000000`. Plain zero formats preserve their displayed zero padding; General
-uses the unpadded integer. Other number formats, fractions, and values exceeding
-the precision limit require Text cells. An identifier already rounded by Excel
-cannot be recovered by the importer.
+## Legacy compatibility
 
-Formula cells in imported fields are unsupported. Replace those formulas with
-their values using Excel's **Paste Special → Values** before uploading. The importer does not calculate
-formulas or trust their cached results.
+Recognized legacy headers (Part Number or PN, Description1–Description5,
+Bulk Fixed Quantity, Package Fixed Quantity, Barcode Value, and Status) remain
+supported with case, whitespace, underscore, and camel-case variations.
+Barcode Value maps only to Product Barcode. If a legacy file omits Bulk Barcode,
+updates retain the existing bulk code and additions leave it empty. BillcoMaster
+requires both barcode columns to be mapped, although individual cells may be
+blank. A manual mapping imports only selected description columns. Without a
+manual mapping, conflicting direct and legacy descriptions are reported as errors.
+Duplicate recognized headers require an explicit unambiguous mapping.
 
-Rows with no values in any mapped import field are skipped and counted as blank,
-even if unrelated columns contain data. A row missing a required value,
-containing an invalid quantity/status/identifier, or having conflicting
-descriptions is invalid and skipped. Errors identify the original worksheet
-row and field. When the same trimmed, case-sensitive part number appears more
-than once in the selected worksheet, every row for that part number is invalid;
-the importer does not choose one duplicate to save.
+## Limits and supported files
 
-Active products may produce labels after import. Inactive products can be looked
-up and their information remains visible, but their quantity and label preview
-are unavailable. Bulk Fixed and Package Fixed use their imported fixed
-quantities and Barcode Value. Bulk Variable and standalone BCC require operator
-quantities and never display barcodes.
+Only `.xlsx` is supported. Legacy `.xls`, macro-enabled `.xlsm`, encrypted
+workbooks, and formula evaluation are unsupported. Limits are 5 MiB per upload,
+20 MiB expanded ZIP contents, 1,000 ZIP entries, and 5,000 rows after the header.
+The first nonblank header row must occur within the first 5,001 worksheet rows.
+One selected product worksheet is processed per import.
 
-## Supported files and limits
+## API
 
-| Limit | Maximum |
-| --- | --- |
-| Uploaded `.xlsx` file | 5 MiB |
-| Decompressed ZIP contents | 20 MiB |
-| ZIP entries | 1000 |
-| Data rows in the selected worksheet | 5000 |
-
-The first nonblank header row must occur within the first 5001 worksheet rows.
-The selected worksheet may contain at most 5000 rows after that header.
-
-Only `.xlsx` is supported. Legacy `.xls`, macro-enabled `.xlsm`, password-protected
-workbooks, and formula evaluation are unsupported. Save a plain `.xlsx` copy
-with values before importing. One worksheet is imported at a time. Oversized,
-malformed, or unsupported workbooks are rejected without saving products.
-
-## Import API
-
-Both endpoints accept multipart form data with one `file` field and an optional
-`sheetName` field:
+All endpoints use multipart `file`, optional `sheetName`, and optional JSON
+`mapping`. Omitted sheetName prefers BillcoMaster, then the first worksheet.
 
 | Endpoint | Behavior |
 | --- | --- |
-| `POST /api/products/import/preview` | Validate and return proposed additions/updates; no database writes |
-| `POST /api/products/import` | Revalidate and transactionally save valid rows |
+| `POST /api/products/import/columns` | Return sheet names, detected headers/indices, and a suggested mapping; no writes |
+| `POST /api/products/import/preview` | Validate mapped fields and classify additions/updates; no writes |
+| `POST /api/products/import` | Revalidate and save valid products transactionally |
 
-If `sheetName` is omitted, the first worksheet is selected. The preview returns
-`sheetName`, available `sheetNames`, `totalRows`, `blankRows`, `invalidRows`,
-proposed `added`/`updated` counts, valid `rows`, and field-level `errors`.
-Each valid row includes its worksheet row number, product data, and `add` or
-`update` action. Import returns the same counts and errors without the preview
-`rows` list; its `added`/`updated` values describe saved products.
+Example mapping for the primary workbook:
 
-| HTTP status | Meaning |
-| --- | --- |
-| `200` | Workbook processed; inspect counts and row errors |
-| `400` | Missing/invalid upload, unsupported filename extension, or invalid form fields |
-| `413` | File exceeds the upload size limit |
-| `422` | Workbook or worksheet cannot be validated, including format/structural limits |
-| `500` | Import processing or database operation failed; response contains a generic error |
+```json
+{
+  "partNumber": 1,
+  "packageFixedQuantity": 2,
+  "descriptionColumns": [4],
+  "productBarcode": 5,
+  "bulkFixedQuantity": 6,
+  "bulkBarcode": 7
+}
+```
 
-A successful HTTP response can include skipped invalid rows. Review `errors`
-and `invalidRows` rather than interpreting `200` as every row being imported.
-The API uses the same local SQLite database as product lookup. Authentication,
-printing, SATO integration, reporting, and customer import are not implemented.
+Preview returns sheetName, sheetNames, totalRows, blankRows, invalidRows,
+added/updated counts, valid rows with product data/actions, and field-level
+errors with original row numbers. Import returns the counts/errors without the
+preview rows. A 200 response can include skipped invalid rows; inspect the report.
+Malformed requests return 400, oversized uploads 413, workbook/mapping errors
+422, and unexpected storage failures 500 with a generic message.

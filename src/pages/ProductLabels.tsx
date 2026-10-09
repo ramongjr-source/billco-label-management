@@ -32,6 +32,8 @@ export function ProductLabels({ initialLabelType, onLabelTypeChange, onNavigateI
   const labelRules = getLabelRules(labelType)
   const validQuantity = /^\d+$/.test(quantity) && Number(quantity) >= 1 && Number(quantity) <= 999999
   const activeProduct = product?.status === 'active' ? product : null
+  const missingFixedData = Boolean(activeProduct && labelRules.showBarcode && (!(labelType === 'bulk-fixed' ? activeProduct.bulkBarcode : activeProduct.productBarcode).trim() || (labelType === 'bulk-fixed' ? activeProduct.bulkFixedQuantity : activeProduct.packageFixedQuantity) === null))
+  const previewProduct = missingFixedData ? null : activeProduct
 
   const cancelLookup = useCallback(() => {
     requestIdRef.current += 1
@@ -131,7 +133,7 @@ export function ProductLabels({ initialLabelType, onLabelTypeChange, onNavigateI
             <div className="page-heading"><h1>{selectedType.title}</h1><p>{selectedType.subtitle}</p></div>
             <ProductSearchForm
               partNumber={partNumber} product={product} searchMessage={searchMessage}
-              searchError={searchError} isSearching={isSearching} canPreview={Boolean(activeProduct)}
+              searchError={searchError} isSearching={isSearching} canPreview={Boolean(previewProduct)}
               poNumber={poNumber} lotNumber={lotNumber} quantity={quantity}
               labelType={labelType} quantityEditable={labelRules.quantityEditable}
               onPartNumberChange={changePartNumber}
@@ -142,7 +144,8 @@ export function ProductLabels({ initialLabelType, onLabelTypeChange, onNavigateI
             />
           </div>
           <div className="preview-column min-w-0">
-            <LabelPreviewPanel rules={labelRules} previewRef={previewRef} data={activeProduct ? { product: activeProduct, poNumber, lotNumber, quantity: validQuantity ? quantity : '' } : null} />
+            <LabelPreviewPanel rules={labelRules} previewRef={previewRef} data={previewProduct ? { product: previewProduct, poNumber, lotNumber, quantity: validQuantity ? quantity : '' } : null} />
+            {missingFixedData && <p className="preview-warning" role="status">This product is missing its {labelType === 'bulk-fixed' ? 'bulk' : 'package'} fixed quantity or barcode. Import its barcode from BillcoMaster before creating this fixed-quantity label.</p>}
             {activeProduct && !validQuantity && <p className="preview-warning" role="status">Enter a positive whole-number quantity, up to 999999, to complete the label.</p>}
           </div>
         </div>

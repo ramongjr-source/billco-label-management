@@ -1,4 +1,4 @@
-import type { ProductImportPreview, ProductImportResult } from '../../shared/productImport.js'
+import type { ProductImportColumns, ProductImportMapping, ProductImportPreview, ProductImportResult } from '../../shared/productImport.js'
 
 export class ProductImportRequestError extends Error {
   readonly sheetNames?: string[]
@@ -9,10 +9,11 @@ export class ProductImportRequestError extends Error {
   }
 }
 
-async function requestImport<T>(path: string, file: File, sheetName: string, signal: AbortSignal): Promise<T> {
+async function requestImport<T>(path: string, file: File, sheetName: string, signal: AbortSignal, mapping?: ProductImportMapping): Promise<T> {
   const form = new FormData()
   form.append('file', file)
   if (sheetName) form.append('sheetName', sheetName)
+  if (mapping) form.append('mapping', JSON.stringify({ ...mapping, descriptionColumns: mapping.descriptionColumns.filter(Boolean) }))
   const response = await fetch(path, { method: 'POST', body: form, signal })
   if (!response.ok) {
     let details: { error?: unknown; sheetNames?: unknown } = {}
@@ -29,10 +30,14 @@ async function requestImport<T>(path: string, file: File, sheetName: string, sig
   return response.json() as Promise<T>
 }
 
-export function previewProductImport(file: File, sheetName: string, signal: AbortSignal): Promise<ProductImportPreview> {
-  return requestImport('/api/products/import/preview', file, sheetName, signal)
+export function inspectProductImport(file: File, sheetName: string, signal: AbortSignal): Promise<ProductImportColumns> {
+  return requestImport('/api/products/import/columns', file, sheetName, signal)
 }
 
-export function commitProductImport(file: File, sheetName: string, signal: AbortSignal): Promise<ProductImportResult> {
-  return requestImport('/api/products/import', file, sheetName, signal)
+export function previewProductImport(file: File, sheetName: string, signal: AbortSignal, mapping?: ProductImportMapping): Promise<ProductImportPreview> {
+  return requestImport('/api/products/import/preview', file, sheetName, signal, mapping)
+}
+
+export function commitProductImport(file: File, sheetName: string, signal: AbortSignal, mapping?: ProductImportMapping): Promise<ProductImportResult> {
+  return requestImport('/api/products/import', file, sheetName, signal, mapping)
 }

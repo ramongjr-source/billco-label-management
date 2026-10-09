@@ -45,9 +45,9 @@ test('preview classifies additions and updates without mutation; commit upserts 
   assert.equal('rows' in imported, false)
   assert.deepEqual(findProductByPartNumber(db, '5080'), {
     partNumber: '5080', description: 'Changed master description', bulkFixedQuantity: 222,
-    packageFixedQuantity: 22, barcodeValue: 'EXCEL-0005080', status: 'inactive',
+    packageFixedQuantity: 22, productBarcode: 'EXCEL-0005080', bulkBarcode: '5080', status: 'inactive',
   })
-  assert.equal(findProductByPartNumber(db, 'NEW-001')?.barcodeValue, 'DIRECT-0001')
+  assert.equal(findProductByPartNumber(db, 'NEW-001')?.productBarcode, 'DIRECT-0001')
   const repeated = await importProducts(db, buffer)
   assert.equal(repeated.added, 0)
   assert.equal(repeated.updated, 2)
@@ -71,7 +71,7 @@ test('legacy descriptions join trimmed fragments, ignore blank rows, and normali
   assert.equal(preview.rows[0].row, 3)
   assert.equal(preview.rows[0].product.partNumber, '000123')
   assert.equal(preview.rows[0].product.description, 'HEX HEAD PIPE PLUG')
-  assert.equal(preview.rows[0].product.barcodeValue, ' 00000BC ')
+  assert.equal(preview.rows[0].product.productBarcode, ' 00000BC ')
   await importProducts(db, buffer)
   assert.equal(findProductByPartNumber(db, '000124')?.status, 'inactive')
 })
@@ -116,10 +116,10 @@ test('all exact trimmed duplicate part numbers are invalid, including a duplicat
   const result = await importProducts(db, buffer)
   assert.equal(result.added, 1)
   assert.equal(findProductByPartNumber(db, 'DUP'), undefined)
-  assert.equal(findProductByPartNumber(db, 'Dup')?.barcodeValue, 'CASE')
+  assert.equal(findProductByPartNumber(db, 'Dup')?.productBarcode, 'CASE')
 })
 
-test('every required field is validated and an empty barcode never falls back to PN or an existing barcode', async (t) => {
+test('invalid supplied fields are rejected and clearing a product barcode never falls back to a part or bulk code', async (t) => {
   const db = database(t)
   const original = findProductByPartNumber(db, '5080')
   const invalid: ExcelJS.CellValue[][] = [
@@ -138,11 +138,14 @@ test('every required field is validated and an empty barcode never falls back to
     valid,
   ]
   const result = await importProducts(db, await workbook(invalid))
-  assert.equal(result.invalidRows, 12)
+  assert.equal(result.invalidRows, 11)
   assert.equal(result.added, 1)
-  assert.deepEqual(findProductByPartNumber(db, '5080'), original)
-  assert.equal(findProductByPartNumber(db, 'NEW-001')?.barcodeValue, 'DIRECT-0001')
-  assert.equal(new Set(result.errors.map((error) => error.row)).size, 12)
+  assert.notEqual(findProductByPartNumber(db, '5080')?.productBarcode, original?.productBarcode)
+  assert.equal(findProductByPartNumber(db, '5080')?.productBarcode, '')
+  assert.equal(findProductByPartNumber(db, '5080')?.bulkBarcode, '5080')
+  assert.equal(result.updated, 1)
+  assert.equal(findProductByPartNumber(db, 'NEW-001')?.productBarcode, 'DIRECT-0001')
+  assert.equal(new Set(result.errors.map((error) => error.row)).size, 11)
 })
 
 test('rich text and numeric zero-padding preserve direct identifiers while unsafe numeric identifiers are rejected', async (t) => {
@@ -163,10 +166,10 @@ test('rich text and numeric zero-padding preserve direct identifiers while unsaf
   assert.equal(preview.invalidRows, 4)
   assert.equal(preview.added, 2)
   assert.equal(preview.rows[0].product.partNumber, '000123')
-  assert.equal(preview.rows[0].product.barcodeValue, '00007')
+  assert.equal(preview.rows[0].product.productBarcode, '00007')
   assert.equal(preview.rows[0].product.description, 'Rich description')
   assert.equal(preview.rows[1].product.partNumber, '00TEXT')
-  assert.equal(preview.rows[1].product.barcodeValue, ' 00 BAR ')
+  assert.equal(preview.rows[1].product.productBarcode, ' 00 BAR ')
   assert.ok(preview.errors.every((error) => /text|safe integer|format/.test(error.message)))
 })
 
@@ -245,7 +248,7 @@ test('wide sparse worksheets map required fields beyond column 64 and ignore unr
   assert.equal(result.added, 1)
   assert.equal(result.updated, 1)
   assert.deepEqual(result.errors, [])
-  assert.equal(findProductByPartNumber(db, 'NEW-001')?.barcodeValue, 'DIRECT-0001')
+  assert.equal(findProductByPartNumber(db, 'NEW-001')?.productBarcode, 'DIRECT-0001')
   assert.equal(findProductByPartNumber(db, '5080')?.description, 'Updated coupling')
   assert.equal(findProductByPartNumber(db, '5080')?.status, 'inactive')
 })
@@ -255,7 +258,7 @@ test('commit recomputes add/update counts and rolls back all valid rows on an un
   const buffer = await workbook([valid])
   assert.equal((await previewProductImport(db, buffer)).added, 1)
   db.prepare(`
-    INSERT INTO products (part_number, description, bulk_fixed_quantity, package_fixed_quantity, barcode_value, status)
+    INSERT INTO products (part_number, description, bulk_fixed_quantity, package_fixed_quantity, product_barcode, status)
     VALUES (?, ?, ?, ?, ?, ?)
   `).run('NEW-001', 'Concurrent insert after preview', 10, 1, 'PREVIOUS', 'active')
   const result = await importProducts(db, buffer)
