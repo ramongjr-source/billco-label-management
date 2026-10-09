@@ -1,41 +1,7 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import { Maximize, PackageSearch, X } from 'lucide-react'
-import JsBarcode from 'jsbarcode'
-import { BillcoLogo } from './BillcoLogo'
+import { ProductLabel } from './ProductLabel'
 import type { LabelData, LabelRules } from '../data/products'
-
-function Barcode({ value }: { value: string }) {
-  const ref = useRef<SVGSVGElement>(null)
-
-  useEffect(() => {
-    if (ref.current) {
-      JsBarcode(ref.current, value, { format: 'CODE128B', width: 3, height: 94, margin: 0, displayValue: false, background: '#ffffff', lineColor: '#000000' })
-    }
-  }, [value])
-
-  return <div className="barcode-group"><svg ref={ref} className="barcode" role="img" aria-label={`Code 128 barcode for ${value}`} preserveAspectRatio="none" /><span className="barcode-value" aria-hidden="true">{value}</span></div>
-}
-
-function LabelDetail({ name, value }: { name: string; value: string }) {
-  const text = value.trim() || '—'
-  const fontSize = text.length > 16 ? 'calc(var(--detail-font-size) * .53)' : text.length > 10 ? 'calc(var(--detail-font-size) * .7)' : undefined
-
-  return <div className="label-detail flex items-baseline gap-5"><span>{name} #:</span><strong style={{ fontSize }}>{text}</strong></div>
-}
-
-function ProductLabel({ data, rules }: { data: LabelData; rules: LabelRules }) {
-  return (
-    <div className={`product-label ${rules.height === 2 ? 'compact-label' : ''}`} aria-label="Product label preview">
-      <div className="label-brand"><BillcoLogo /></div>
-      <div className="label-part flex items-baseline gap-4"><span>PART #:</span><strong>{data.product.partNumber}</strong></div>
-      <div className="label-description"><span>DESCRIPTION:</span><strong>{data.product.description}</strong></div>
-      <LabelDetail name="PO" value={data.poNumber} />
-      <LabelDetail name="LOT" value={data.lotNumber} />
-      <div className="label-quantity flex items-baseline gap-6"><span>QTY:</span><strong>{data.quantity || '—'}</strong></div>
-      {rules.showBarcode && <Barcode value={rules.height === 5 ? data.product.bulkBarcode : data.product.productBarcode} />}
-    </div>
-  )
-}
 
 export function LabelPreviewPanel({ data, rules, previewRef }: { data: LabelData | null; rules: LabelRules; previewRef: RefObject<HTMLElement | null> }) {
   const [expanded, setExpanded] = useState(false)

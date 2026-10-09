@@ -109,42 +109,41 @@ input[type="radio"], input[type="checkbox"] { width: 22px; height: 22px; accent-
 .expand-button:hover:not(:disabled) { background: #e3e9f1; }
 .expand-button:disabled { opacity: .45; }
 .preview-stage { background: #e0e4eb; padding: 18px 32px 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
-.product-label { --detail-font-size: 8.5cqw; width: 100%; max-width: 435px; aspect-ratio: 3 / 5; border: 1px solid #9097a2; border-radius: 20px; background: #fff; color: #000; padding: 3.5% 4%; box-shadow: 0 0 7px #1a26391a; container-type: inline-size; font-family: "Barlow Condensed", "Arial Narrow", sans-serif; font-weight: 700; overflow: hidden; display: flex; flex-direction: column; }
-.label-brand { display: flex; align-items: center; justify-content: center; border-bottom: 4px solid #000; padding-bottom: 4%; margin-bottom: 1%; height: 23%; flex-shrink: 0; }
-.label-brand .billco-initial { font-size: 33cqw; letter-spacing: -3cqw; line-height: .88; font-style: normal; }
-.label-brand .billco-name { font-size: 19cqw; letter-spacing: -1.2cqw; }
-.label-brand .billco-corporation { font-family: Arial, sans-serif; color: #fff; background: #000; font-size: 5.9cqw; letter-spacing: .1cqw; padding: .5cqw 1.5cqw; }
-.label-brand .billco-wordmark { margin-left: .2cqw; }
-.label-part { line-height: 1.1; font-size: 8.5cqw; margin-bottom: .5%; }
-.label-part strong { font-size: 13cqw; line-height: 1.05; }
-.label-description { font-size: 8.2cqw; line-height: 1.08; margin-bottom: 1.5%; }
-.label-description strong { display: block; text-transform: uppercase; overflow-wrap: anywhere; }
-.label-detail { font-size: var(--detail-font-size); line-height: 1.15; margin-bottom: 1%; }
-.label-detail strong { overflow-wrap: anywhere; min-width: 0; flex: 1; font-size: var(--detail-font-size); }
-.label-detail span { flex-shrink: 0; }
-.label-quantity { font-size: 8.5cqw; line-height: 1; margin-bottom: 3%; }
-.label-quantity strong { font-size: 17cqw; line-height: 1; }
-.barcode-group { width: 92%; height: 20%; min-height: 0; flex: 0 0 auto; margin: auto auto 0; display: flex; flex-direction: column; }
-.barcode { display: block; width: 100%; height: 100%; flex: 1 1 auto; min-height: 0; }
-.barcode-value { font-family: Arial, sans-serif; font-weight: 500; font-size: 6cqw; line-height: 1.25; margin-top: 6px; text-align: center; }
+/* The label surface uses only flat black ink, white stock, and upright type. */
+.product-label { --part-font-size: 22cqw; width: 100%; max-width: 435px; aspect-ratio: 3 / 5; border: 1px solid #000; border-radius: 0; background: #fff; color: #000; padding: 4%; container-type: inline-size; font-family: Arial, Helvetica, sans-serif; font-style: normal; font-weight: 700; display: grid; grid-template-rows: .3fr .95fr 1.05fr .45fr .45fr .65fr; gap: 1.2%; }
+.product-label > * { min-width: 0; min-height: 0; }
+.product-label strong { font-weight: 900; }
+.label-brand { display: flex; align-items: center; justify-content: center; gap: 2cqw; line-height: 1.1; }
+.label-brand strong { font-size: min(7cqw, calc(var(--part-font-size) * .45)); }
+.label-brand span { font-size: min(3.7cqw, calc(var(--part-font-size) * .25)); letter-spacing: .1cqw; }
+.label-part { border: 2px solid #000; padding: 1.5cqw 2cqw; display: flex; flex-direction: column; }
+.label-part > span, .label-description > span { font-size: min(3.4cqw, calc(var(--part-font-size) * .22)); line-height: 1.2; flex-shrink: 0; }
+.label-part strong { font-size: 22cqw; line-height: 1; flex: 1; min-height: 0; overflow-wrap: anywhere; }
+.label-description { display: flex; flex-direction: column; }
+.label-description strong { font-size: min(10.5cqw, calc(var(--part-font-size) * .6)); line-height: 1.08; text-transform: uppercase; overflow-wrap: anywhere; flex: 1; min-height: 0; }
+.label-quantity { display: flex; align-items: center; gap: 3cqw; line-height: 1.1; }
+.label-quantity span { font-size: min(4cqw, calc(var(--part-font-size) * .25)); }
+.label-quantity strong { font-size: min(9cqw, calc(var(--part-font-size) * .5)); }
+.label-details { display: flex; gap: 4cqw; }
+.label-detail { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; }
+.label-detail span { font-size: min(3.4cqw, calc(var(--part-font-size) * .22)); line-height: 1.2; }
+.label-detail strong { font-size: min(6cqw, calc(var(--part-font-size) * .4)); line-height: 1.05; overflow-wrap: anywhere; flex: 1; min-height: 0; }
+.label-lot strong { font-size: min(5.5cqw, calc(var(--part-font-size) * .35)); }
+.barcode-group { width: 100%; min-height: 0; padding: 0 3cqw; display: flex; flex-direction: column; gap: 1cqw; }
+.barcode { display: block; width: 100%; flex: 1; min-height: 0; }
+.barcode-value { font-family: Arial, Helvetica, sans-serif; font-weight: 400; font-size: min(3.2cqw, calc(var(--part-font-size) * .2)); line-height: 1.1; overflow-wrap: anywhere; text-align: center; }
+.no-barcode { grid-template-rows: .3fr 1.15fr 1.25fr .6fr .6fr; }
+.compact-label { aspect-ratio: 3 / 2; grid-template-rows: .3fr 1fr .4fr .4fr .65fr; gap: 1.6%; }
+.compact-label .label-part { padding: 1cqw 2cqw; }
+.compact-label .label-brand strong { font-size: min(5.5cqw, calc(var(--part-font-size) * .45)); }
+.compact-label .label-brand span { font-size: min(3cqw, calc(var(--part-font-size) * .25)); }
+.compact-label .label-quantity strong { font-size: min(11cqw, calc(var(--part-font-size) * .65)); }
+.compact-label.no-barcode { grid-template-rows: .3fr 1.25fr .55fr .55fr; }
 .empty-preview { width: 100%; max-width: 435px; aspect-ratio: 3 / 5; color: #5c6879; text-align: center; padding: 25px; }
 .empty-preview h3 { font-size: 25px; font-weight: 600; }
 .empty-preview p { font-size: 18px; }
 .preview-warning { color: #a12929; font-size: 18px; margin-top: 10px; }
 .preview-policy { color: #657181; font-size: 13px; text-align: center; padding-top: 9px; }
-.compact-label { --detail-font-size: 4.4cqw; max-width: none; aspect-ratio: 3 / 2; padding: 2.5% 4%; border-radius: 12px; }
-.compact-label .label-brand { height: 18%; padding-bottom: 1%; margin-bottom: .5%; border-bottom-width: 2px; }
-.compact-label .label-brand .billco-initial { font-size: 12cqw; letter-spacing: -1cqw; }
-.compact-label .label-brand .billco-name { font-size: 8cqw; letter-spacing: -.5cqw; }
-.compact-label .label-brand .billco-corporation { font-size: 2.6cqw; padding: .2cqw .6cqw; }
-.compact-label .label-part { font-size: 5cqw; margin-bottom: .25%; }
-.compact-label .label-part strong { font-size: 7cqw; }
-.compact-label .label-description { font-size: 4.4cqw; margin-bottom: .5%; }
-.compact-label .label-detail { margin-bottom: .5%; gap: 2cqw; }
-.compact-label .label-quantity { font-size: 5cqw; margin-bottom: 1%; gap: 2cqw; }
-.compact-label .label-quantity strong { font-size: 8.5cqw; }
-.compact-label .barcode-group { height: 17%; }
-.compact-label .barcode-value { font-size: 3.5cqw; margin-top: 4px; }
 .compact-empty-preview { max-width: none; aspect-ratio: 3 / 2; }
 .preview-dialog { border: 1px solid #c6ccd5; border-radius: 8px; padding: 18px; width: min(620px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto; margin: auto; background: #f0f3f7; }
 .preview-dialog::backdrop { background: #142131b3; }
@@ -251,7 +250,6 @@ input[type="radio"], input[type="checkbox"] { width: 22px; height: 22px; accent-
   .preview-heading { gap: 8px; padding: 0 0 9px; }
   .preview-heading h2 { font-size: 24px; }
   .preview-size { font-size: 15px; }
-  .product-label { border-radius: 14px; }
   .label-detail { gap: 3cqw; }
   .import-upload-panel, .import-report-panel { padding: 0 14px 16px; }
   .import-file-fields { grid-template-columns: minmax(0, 1fr); gap: 0; }

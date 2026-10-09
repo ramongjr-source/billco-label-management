@@ -123,14 +123,18 @@ test('does not restore an old product when the part number changes during a look
   await page.getByRole('button', { name: 'Search', exact: true }).click()
   await lookup.requested
   await expect(page.getByRole('button', { name: 'Searching…', exact: true })).toBeDisabled()
+  const nextLookup = await holdLookup(page, '5082')
   await page.getByRole('textbox', { name: 'Part Number', exact: true }).fill('5082')
+  await nextLookup.requested
   const response = page.waitForResponse((response) => isLookup(response.request(), '5081'))
   await lookup.release()
   await finishResponseRendering(page, await response)
   await expect(page.getByRole('textbox', { name: 'Part Number', exact: true })).toHaveValue('5082')
   await expect(page.getByLabel('Description', { exact: true })).toHaveValue('')
   await expect(page.getByLabel('Product label preview', { exact: true })).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'Search', exact: true })).toBeEnabled()
+  await expect(page.getByRole('button', { name: 'Searching…', exact: true })).toBeDisabled()
+  await nextLookup.release()
+  await expect(page.getByLabel('Description', { exact: true })).toHaveValue('1/2 Brass Adapter')
 })
 
 test('does not restore an old product after Clear during a lookup', async ({ page }) => {

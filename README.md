@@ -29,6 +29,13 @@ live; fixed-quantity labels include a real Code 128 barcode. Any editable
 quantity suppresses the barcode. Inactive product information is visible,
 but its quantity and label preview remain unavailable.
 The preview can be expanded, and Clear resets the workspace.
+Part Number edits automatically look up the product after a 300 ms pause;
+Search and Enter still perform an immediate lookup. A pending lookup clears the
+previous product's preview, and cancelled or stale responses cannot restore it.
+The label itself uses flat black-and-white thermal styling with a boxed Part
+Number as its largest text. Bulk labels show description, quantity, PO, and lot;
+compact Package Fixed and BCC labels show Part Number, quantity, and lot.
+See [`docs/label-preview.md`](docs/label-preview.md) for layouts and screenshots.
 Selecting Bulk Variable or BCC clears the quantity, and product lookups in
 either type require a new operator-entered quantity.
 
