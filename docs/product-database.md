@@ -254,3 +254,12 @@ records. Back up the database and explicitly reconcile these conflicting master
 records before retrying startup. External tools that write to this database must
 register the same `part_number_key` function; use the application's database
 access layer for maintenance.
+
+## Development master dataset
+
+`npm run dev` runs the idempotent `npm run db:setup` step before starting the API
+and UI. It inserts the committed validated BillcoMaster snapshot and the five
+legacy examples. Existing products, including imported updates and inactive
+records, are never overwritten by startup seeding. Production `npm run start`
+continues to migrate only, without seeding. See
+[development seed data](development-seed.md) for generation and refresh steps.

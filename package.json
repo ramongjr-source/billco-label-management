@@ -15,6 +15,7 @@
     "dev": "npm run db:setup && concurrently --kill-others --names api,ui \"npm:dev:api\" \"npm:dev:ui\"",
     "dev:api": "tsx watch server/index.ts",
     "dev:ui": "vite",
+    "db:seed:generate": "tsx scripts/generate-development-seed.ts",
     "db:setup": "tsx server/setup.ts",
     "build": "tsc --noEmit && tsc -p tsconfig.server.json && node scripts/copy-database-assets.mjs && vite build",
     "typecheck": "tsc --noEmit",

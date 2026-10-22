@@ -21,6 +21,12 @@ Open the address shown by Vite. The Product Labels page follows
 **3001** and Vite on port **5173**. Set `API_PORT` or `UI_PORT` to use different
 ports. Vite forwards `/api` requests to the local API.
 
+`npm run dev` automatically seeds all **673 validated BillcoMaster products**
+from the committed dataset; no workbook upload or workbook file is needed. Search
+**PA.013**, **AB.025X013**, or **HR.013** immediately. PA.013 supports all four
+label modes. Products without bulk-fixed data keep that mode unavailable.
+See [development seed data](docs/development-seed.md) for regeneration instructions.
+
 The initial product **5080** is loaded from the API. Development seeds also
 include active parts **5081**, **5082**, and **5083**, plus inactive part
 **5090**. Search a part, edit PO/lot details, and select one of four label
@@ -49,8 +55,8 @@ either type require a new operator-entered quantity.
 | BCC | 3 × 2 inches | Editable | None |
 
 Products are stored in an ignored local SQLite file, `data/billco.sqlite`,
-or the path specified by `DATABASE_PATH`. The development seeds are examples,
-not a production product master. Setup applies migrations and inserts missing
+or the path specified by `DATABASE_PATH`. Development seeds include a snapshot of validated BillcoMaster records plus
+five legacy examples. They are development data, not a live production master. Setup applies migrations and inserts missing
 seed products without replacing existing records. See
 [`docs/product-database.md`](docs/product-database.md) for the schema, lookup API,
 persistence, backups, and initialization details.

@@ -4,7 +4,7 @@ import { DatabaseSync } from 'node:sqlite'
 import type { Product } from '../shared/product.js'
 import { partNumberKey } from '../shared/partNumber.js'
 
-export { seedProducts } from './seed.js'
+export { seedProducts, seedDevelopmentProducts } from './seed.js'
 
 const migrations = [
   { version: 1, filename: '001-create-products.sql' },
