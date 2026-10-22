@@ -1,5 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite'
 import type { Product } from '../shared/product.js'
+import { billcoMasterProducts } from './seeds/billco-master.js'
 
 const products: Product[] = [
   { partNumber: '5080', description: '3/8 Brass Coupling', bulkFixedQuantity: 500, packageFixedQuantity: 50, productBarcode: '5080', bulkBarcode: '5080', status: 'active' },
@@ -10,7 +11,7 @@ const products: Product[] = [
 ]
 
 /** Explicit development data only. Existing products, including inactive ones, are never changed. */
-export function seedProducts(db: DatabaseSync): number {
+export function seedProducts(db: DatabaseSync, records: readonly Product[] = products): number {
   const insert = db.prepare(`
     INSERT INTO products (
       part_number, description, bulk_fixed_quantity, package_fixed_quantity, product_barcode, bulk_barcode, status
@@ -21,7 +22,7 @@ export function seedProducts(db: DatabaseSync): number {
   let inserted = 0
   db.exec('BEGIN IMMEDIATE')
   try {
-    for (const product of products) {
+    for (const product of records) {
       inserted += Number(insert.run(
         product.partNumber,
         product.description,
@@ -38,4 +39,9 @@ export function seedProducts(db: DatabaseSync): number {
     db.exec('ROLLBACK')
     throw error
   }
+}
+
+/** Real master data first; keep legacy examples for existing UI demonstrations. */
+export function seedDevelopmentProducts(db: DatabaseSync): number {
+  return seedProducts(db, [...billcoMasterProducts, ...products])
 }
