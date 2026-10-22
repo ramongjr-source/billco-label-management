@@ -128,7 +128,7 @@ test('updates matching part numbers and adds new products in the same import', a
   await commit(page)
   await uploadRows(page, [
     headers,
-    productRow(existing, 'UPDATED DESCRIPTION', 240, 24, `NEW-${existing}`),
+    productRow(existing.toLowerCase(), 'UPDATED DESCRIPTION', 240, 24, `NEW-${existing}`),
     productRow(added, 'NEW PRODUCT', 90, 9),
   ], 'updated-master.xlsx')
   const preview = await validate(page)
@@ -371,4 +371,25 @@ test('maps arbitrary supplier headers and ordered descriptions, and invalidates 
   await commit(page)
   const product = await (await request.get(`/api/products?partNumber=${part}`)).json()
   expect(product).toMatchObject({ description: 'HEX', productBarcode: `PRODUCT-${part}`, bulkBarcode: `BULK-${part}` })
+})
+
+test('case-insensitive lookup preserves master spelling in every label mode', async ({ page, request }) => {
+  const stored = `Ab.025X013-${partNumber()}`
+  const file = await workbookFile('case.xlsx', [{ name: 'Products', rows: [headers, productRow(stored)] }])
+  const imported = await request.post('/api/products/import', { multipart: { file } })
+  expect(imported.ok()).toBeTruthy()
+  await page.getByRole('button', { name: 'Product Labels', exact: true }).click()
+  const input = page.getByRole('textbox', { name: 'Part Number', exact: true })
+  for (const mode of ['Package Fixed Qty', 'Bulk Fixed Qty', 'Bulk Variable Qty', 'BCC']) {
+    await page.getByRole('radio', { name: mode, exact: true }).check()
+    for (const query of [stored, stored.toLowerCase(), stored.toUpperCase()]) {
+      await input.fill(query)
+      await page.getByRole('button', { name: 'Search', exact: true }).click()
+      await expect(input).toHaveValue(stored)
+      if (mode === 'Bulk Variable Qty' || mode === 'BCC') {
+        await page.getByRole('spinbutton', { name: 'Quantity', exact: true }).fill('37')
+      }
+      await expect(page.locator('.label-part strong')).toHaveText(stored)
+    }
+  }
 })

@@ -102,21 +102,21 @@ test('legacy numeric description fragments are consolidated with text instead of
   assert.equal(findProductByPartNumber(db, 'NUMERIC-DESC')?.description, 'HEX 0 HEAD 0.375 PIPE PLUG')
 })
 
-test('all exact trimmed duplicate part numbers are invalid, including a duplicate with another validation error', async (t) => {
+test('all case-insensitive trimmed duplicate part numbers are invalid, including a duplicate with another validation error', async (t) => {
   const db = database(t)
   const buffer = await workbook([
     [' DUP ', 'First', 10, 1, 'FIRST', 'Active'],
     ['DUP', 'Second', 0, 1, 'SECOND', 'Active'],
-    ['Dup', 'Case-sensitive distinct key', 10, 1, 'CASE', 'Active'],
+    ['Dup', 'Case-only duplicate', 10, 1, 'CASE', 'Active'],
   ])
   const preview = await previewProductImport(db, buffer)
-  assert.equal(preview.invalidRows, 2)
-  assert.equal(preview.added, 1)
-  assert.deepEqual(preview.errors.filter((error) => /more than once/.test(error.message)).map((error) => error.row), [2, 3])
+  assert.equal(preview.invalidRows, 3)
+  assert.equal(preview.added, 0)
+  assert.deepEqual(preview.errors.filter((error) => /more than once/.test(error.message)).map((error) => error.row), [2, 3, 4])
   const result = await importProducts(db, buffer)
-  assert.equal(result.added, 1)
+  assert.equal(result.added, 0)
   assert.equal(findProductByPartNumber(db, 'DUP'), undefined)
-  assert.equal(findProductByPartNumber(db, 'Dup')?.productBarcode, 'CASE')
+  assert.equal(findProductByPartNumber(db, 'Dup'), undefined)
 })
 
 test('invalid supplied fields are rejected and clearing a product barcode never falls back to a part or bulk code', async (t) => {
@@ -338,4 +338,22 @@ test('archive preflight rejects invalid files, expanded-size bombs, false size m
   await assert.rejects(validateWorkbookArchive(zip([{ name: 'link', content: Buffer.from('target'), attributes: (0xa1ff << 16) >>> 0 }])), /symbolic/)
   await assert.rejects(validateWorkbookArchive(zip([{ name: 'xl/vbaProject.bin', content: Buffer.alloc(0) }])), /Macro/)
   await assert.rejects(validateWorkbookArchive(zip([{ name: 'other.xml', content: Buffer.alloc(0) }])), /valid .xlsx/)
+})
+
+test('case-only import updates preserve stored spelling and preview agrees with commit', async (t) => {
+  const db = database(t)
+  await importProducts(db, await workbook([['AB.025X013', 'Original', 120, 12, 'CODE', 'Active']]))
+  const buffer = await workbook([['ab.025x013', 'Updated', 220, 22, 'NEW-CODE', 'Inactive']])
+  const preview = await previewProductImport(db, buffer)
+  assert.equal(preview.updated, 1)
+  assert.equal(preview.added, 0)
+  assert.equal(preview.rows[0].product.partNumber, 'AB.025X013')
+  assert.equal(findProductByPartNumber(db, 'Ab.025x013')?.description, 'Original')
+  assert.equal((await importProducts(db, buffer)).updated, 1)
+  for (const part of ['AB.025X013', 'ab.025x013', 'Ab.025x013', 'aB.025X013']) {
+    assert.equal(findProductByPartNumber(db, part)?.partNumber, 'AB.025X013')
+    assert.equal(findProductByPartNumber(db, part)?.description, 'Updated')
+    assert.equal(findProductByPartNumber(db, part)?.status, 'inactive')
+  }
+  assert.equal((await importProducts(db, buffer)).added, 0)
 })

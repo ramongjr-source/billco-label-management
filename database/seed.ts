@@ -15,7 +15,7 @@ export function seedProducts(db: DatabaseSync): number {
     INSERT INTO products (
       part_number, description, bulk_fixed_quantity, package_fixed_quantity, product_barcode, bulk_barcode, status
     ) VALUES (?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(part_number) DO NOTHING
+    ON CONFLICT(part_number_key(part_number)) DO NOTHING
   `)
 
   let inserted = 0

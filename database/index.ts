@@ -2,18 +2,21 @@ import { mkdirSync, readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import type { Product } from '../shared/product.js'
+import { partNumberKey } from '../shared/partNumber.js'
 
 export { seedProducts } from './seed.js'
 
 const migrations = [
   { version: 1, filename: '001-create-products.sql' },
   { version: 2, filename: '002-separate-barcodes.sql' },
+  { version: 3, filename: '003-case-insensitive-parts.sql' },
 ] as const
 
 export function openProductDatabase(filename: string): DatabaseSync {
   if (filename !== ':memory:') mkdirSync(dirname(resolve(filename)), { recursive: true })
   const db = new DatabaseSync(filename)
   try {
+    db.function('part_number_key', { deterministic: true }, (value) => partNumberKey(String(value)))
     db.exec('PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000; PRAGMA journal_mode = WAL;')
     return db
   } catch (error) {
@@ -70,7 +73,7 @@ export function findProductByPartNumber(db: DatabaseSync, partNumber: string): P
       bulk_barcode AS bulkBarcode,
       status
     FROM products
-    WHERE part_number = ? COLLATE BINARY
+    WHERE part_number_key(part_number) = part_number_key(?)
   `).get(partNumber.trim())
   if (!row) return undefined
 

@@ -49,8 +49,9 @@ products retain their status. No customer records or customer labels are saved.
 
 Part Number and Description must be nonblank. Part Number is trimmed,
 control-free text of at most 64 characters; Description is at most 512 characters.
-Part Number matches are exact and case-sensitive: `005080` differs from `5080`
-and `ABC` differs from `abc`. Every duplicate occurrence within one worksheet is
+Part Number matches ignore case: `005080` differs from `5080`, but `ABC` and
+`abc` identify the same product. Updates retain the original stored spelling,
+including in the validation preview and labels. Every case-insensitive duplicate occurrence within one worksheet is
 invalid, including a duplicate row with another field error.
 
 Fixed quantity columns must be mapped and populated quantities must be whole

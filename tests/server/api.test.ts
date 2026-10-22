@@ -40,7 +40,7 @@ test('HTTP lookup returns database quantities, a single description, and the ind
   })
 })
 
-test('HTTP lookup trims input but preserves exact case and leading zeros', async (t) => {
+test('HTTP lookup trims input case-insensitively while preserving stored spelling and leading zeros', async (t) => {
   const { db, url } = await startApi(t)
   db.prepare(`
     INSERT INTO products
@@ -50,7 +50,7 @@ test('HTTP lookup trims input but preserves exact case and leading zeros', async
   const response = await fetch(`${url}/api/products?partNumber=${encodeURIComponent(' 000Case ')}`)
   assert.equal(response.status, 200)
   assert.equal((await response.json()).partNumber, '000Case')
-  assert.equal((await fetch(`${url}/api/products?partNumber=000case`)).status, 404)
+  assert.equal((await fetch(`${url}/api/products?partNumber=000case`)).status, 200)
   assert.equal((await fetch(`${url}/api/products?partNumber=Case`)).status, 404)
 
   const unicodePart = '😀'.repeat(64)

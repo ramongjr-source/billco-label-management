@@ -26,11 +26,11 @@ function insert(db: DatabaseSync, values: Array<string | number | null> = valid)
 test('initial migration creates strict products and tracks its version once', (t) => {
   const db = openProductDatabase(':memory:')
   t.after(() => db.close())
-  assert.equal(migrateDatabase(db), 2)
+  assert.equal(migrateDatabase(db), 3)
   assert.equal(migrateDatabase(db), 0)
   assert.deepEqual({ ...db.prepare('SELECT version, name FROM schema_migrations ORDER BY version DESC LIMIT 1').get() }, {
-    version: 2,
-    name: '002-separate-barcodes.sql',
+    version: 3,
+    name: '003-case-insensitive-parts.sql',
   })
   assert.equal(db.prepare("SELECT strict FROM pragma_table_list WHERE name = 'products'").get()?.strict, 1)
   assert.equal(db.prepare('SELECT COUNT(*) AS count FROM products').get()?.count, 0)
@@ -89,11 +89,11 @@ test('schema accepts valid maximum field lengths and quantity boundaries', (t) =
   assert.equal(findProductByPartNumber(db, partNumber)?.packageFixedQuantity, 999999)
 })
 
-test('lookup preserves textual leading zeros, exact case, combined descriptions, and barcode values', (t) => {
+test('lookup preserves textual leading zeros, original spelling, combined descriptions, and barcode values', (t) => {
   const db = database(t)
   insert(db, ['005080', 'BRASS COUPLING 3/8', 120, 12, 'BILLCO-5083', 'active'])
   insert(db, ['ABC-01', 'Upper case', 10, 1, 'UPPER', 'active'])
-  insert(db, ['abc-01', 'Lower case', 20, 2, 'LOWER', 'inactive'])
+  assert.throws(() => insert(db, ['abc-01', 'Lower case', 20, 2, 'LOWER', 'inactive']), /UNIQUE/)
 
   assert.deepEqual(findProductByPartNumber(db, ' 005080 '), {
     partNumber: '005080',
@@ -106,8 +106,8 @@ test('lookup preserves textual leading zeros, exact case, combined descriptions,
   })
   assert.equal(findProductByPartNumber(db, '5080'), undefined)
   assert.equal(findProductByPartNumber(db, 'ABC-01')?.description, 'Upper case')
-  assert.equal(findProductByPartNumber(db, 'abc-01')?.status, 'inactive')
-  assert.equal(findProductByPartNumber(db, 'Abc-01'), undefined)
+  assert.equal(findProductByPartNumber(db, 'abc-01')?.status, 'active')
+  assert.equal(findProductByPartNumber(db, 'Abc-01')?.partNumber, 'ABC-01')
 })
 
 test('bound lookup never treats an operator input as SQL', (t) => {
@@ -168,7 +168,7 @@ test('file-backed products persist across closing, reopening, migrating, and see
 
 test('migration refuses a schema from an incompatible application version', (t) => {
   const db = database(t)
-  db.prepare('INSERT INTO schema_migrations (version, name) VALUES (?, ?)').run(3, 'future.sql')
+  db.prepare('INSERT INTO schema_migrations (version, name) VALUES (?, ?)').run(4, 'future.sql')
   assert.throws(() => migrateDatabase(db), /incompatible/)
   assert.equal(db.prepare('SELECT COUNT(*) AS count FROM products').get()?.count, 0)
 })
@@ -180,7 +180,7 @@ test('legacy migration preserves product records and never invents a bulk barcod
   db.exec("CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL DEFAULT 'legacy') STRICT")
   db.prepare('INSERT INTO schema_migrations (version, name) VALUES (?, ?)').run(1, '001-create-products.sql')
   db.prepare('INSERT INTO products VALUES (?, ?, ?, ?, ?, ?)').run('000LEGACY', 'Retained description', 150, 15, '000OLD-CODE', 'inactive')
-  assert.equal(migrateDatabase(db), 1)
+  assert.equal(migrateDatabase(db), 2)
   assert.equal(migrateDatabase(db), 0)
   assert.deepEqual(findProductByPartNumber(db, '000LEGACY'), {
     partNumber: '000LEGACY', description: 'Retained description', bulkFixedQuantity: 150,
@@ -191,4 +191,30 @@ test('legacy migration preserves product records and never invents a bulk barcod
   for (const code of [' ', 'BÁR', 'B'.repeat(129), 'B\nCODE']) {
     assert.throws(() => db.prepare('UPDATE products SET bulk_barcode = ? WHERE part_number = ?').run(code, '000LEGACY'))
   }
+})
+
+test('migration refuses legacy case-only collisions without deleting records', (t) => {
+  const db = openProductDatabase(':memory:')
+  t.after(() => db.close())
+  for (const filename of ['001-create-products.sql', '002-separate-barcodes.sql']) {
+    db.exec(readFileSync(new URL(`../../database/migrations/${filename}`, import.meta.url), 'utf8'))
+  }
+  db.exec("CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, name TEXT NOT NULL)")
+  db.prepare('INSERT INTO schema_migrations VALUES (?, ?)').run(1, '001-create-products.sql')
+  db.prepare('INSERT INTO schema_migrations VALUES (?, ?)').run(2, '002-separate-barcodes.sql')
+  insert(db, ['AB.025X013', ...valid.slice(1)])
+  insert(db, ['ab.025x013', ...valid.slice(1)])
+  assert.throws(() => migrateDatabase(db), /UNIQUE/)
+  assert.equal(db.prepare('SELECT COUNT(*) AS count FROM products').get()?.count, 2)
+  assert.equal(db.prepare('SELECT MAX(version) AS version FROM schema_migrations').get()?.version, 2)
+  db.prepare('DELETE FROM products WHERE part_number = ?').run('ab.025x013')
+  assert.equal(migrateDatabase(db), 1)
+  assert.equal(findProductByPartNumber(db, 'aB.025X013')?.partNumber, 'AB.025X013')
+})
+
+test('Unicode matching uses the same key as imports and preserves spelling', (t) => {
+  const db = database(t)
+  insert(db, ['ÄB.001', ...valid.slice(1)])
+  assert.equal(findProductByPartNumber(db, 'äb.001')?.partNumber, 'ÄB.001')
+  assert.throws(() => insert(db, ['äb.001', ...valid.slice(1)]), /UNIQUE/)
 })

@@ -8,6 +8,7 @@ export { inspectProductWorkbook } from './parser.js'
 
 function effectiveProduct(product: Product, provided: { bulkBarcode: boolean; status: boolean }, existing?: Record<string, unknown>): Product {
   return { ...product,
+    partNumber: (existing?.partNumber as string | undefined) ?? product.partNumber,
     bulkBarcode: provided.bulkBarcode ? product.bulkBarcode : (existing?.bulkBarcode as string | undefined) ?? '',
     status: provided.status ? product.status : (existing?.status as Product['status'] | undefined) ?? 'active',
   }
@@ -15,7 +16,7 @@ function effectiveProduct(product: Product, provided: { bulkBarcode: boolean; st
 
 export async function previewProductImport(db: DatabaseSync, buffer: Buffer, sheetName?: string, mapping?: unknown): Promise<ProductImportPreview> {
   const { providedFields, ...parsed } = await parseProductWorkbook(buffer, sheetName, mapping)
-  const exists = db.prepare('SELECT bulk_barcode AS bulkBarcode, status FROM products WHERE part_number = ? COLLATE BINARY')
+  const exists = db.prepare('SELECT part_number AS partNumber, bulk_barcode AS bulkBarcode, status FROM products WHERE part_number_key(part_number) = part_number_key(?)')
   const rows: ProductImportRow[] = parsed.rows.map(({ row, product }) => {
     const existing = exists.get(product.partNumber)
     return { row, product: effectiveProduct(product, providedFields, existing), action: existing ? 'update' : 'add' }
@@ -30,12 +31,12 @@ export async function importProducts(db: DatabaseSync, buffer: Buffer, sheetName
   let updated = 0
   db.exec('BEGIN IMMEDIATE')
   try {
-    const exists = db.prepare('SELECT bulk_barcode AS bulkBarcode, status FROM products WHERE part_number = ? COLLATE BINARY')
+    const exists = db.prepare('SELECT part_number AS partNumber, bulk_barcode AS bulkBarcode, status FROM products WHERE part_number_key(part_number) = part_number_key(?)')
     const upsert = db.prepare(`
       INSERT INTO products (
         part_number, description, bulk_fixed_quantity, package_fixed_quantity, product_barcode, bulk_barcode, status
       ) VALUES (?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(part_number) DO UPDATE SET
+      ON CONFLICT(part_number_key(part_number)) DO UPDATE SET
         description = excluded.description,
         bulk_fixed_quantity = excluded.bulk_fixed_quantity,
         package_fixed_quantity = excluded.package_fixed_quantity,
