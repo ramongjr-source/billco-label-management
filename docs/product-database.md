@@ -11,7 +11,7 @@ The API and UI share the same TypeScript product shape:
 
 | Field | Type | Constraint |
 | --- | --- | --- |
-| `partNumber` | Text | Unique, nonblank, trimmed, control-free, at most 64 characters; exact case-sensitive identity |
+| `partNumber` | Text | Unique, nonblank, trimmed, control-free, at most 64 characters; case-insensitive identity; original spelling retained |
 | `description` | Text | Single combined, nonblank description, at most 512 characters |
 | `bulkFixedQuantity` | Integer or null | 1–999999 when present; null means unavailable |
 | `packageFixedQuantity` | Integer or null | 1–999999 when present; null means unavailable |
@@ -159,9 +159,10 @@ The explicit **Import valid rows** action saves valid rows in one
 transaction and reports invalid and blank rows that were skipped. Database
 failures roll back the valid batch.
 
-An imported, trimmed Part Number updates its exact, case-sensitive match;
+An imported, trimmed Part Number updates its case-insensitive match, preserving
+the existing stored spelling;
 otherwise a new product is inserted. Leading zeros remain part of a text
-identifier. Duplicate part numbers within the selected worksheet invalidate
+identifier. Case-insensitive duplicate part numbers within the selected worksheet invalidate
 every matching row. The spreadsheet supplies quantities, the single combined
 description, Product Barcode, Bulk Barcode, and optional Active/Inactive status.
 Both barcodes are independent source data, never derived from Part Number,
@@ -236,3 +237,20 @@ Reimport BillcoMaster to populate actual bulk codes. Quantities may now be null
 and barcode values may be empty to represent missing fixed-label master data.
 Setup does not overwrite existing rows, and the migration runs once.
 The lookup API replaces `barcodeValue` with `productBarcode` and `bulkBarcode`.
+
+### Case-insensitive identity migration
+
+Migration 003 adds a unique expression index over `part_number_key(part_number)`.
+The application registers this deterministic SQLite function on every connection
+through `openProductDatabase`. It uses the same JavaScript trim/lowercase key as
+workbook duplicate detection (including Unicode lowercase conversion). Stored
+part numbers, punctuation, leading zeros, and barcodes are never normalized;
+API responses and label previews retain the master record's spelling. This is
+lowercase matching, without accent removal or Unicode normalization.
+
+Existing records that differ only by case prevent migration with a unique-index
+error. The migration transaction rolls back without discarding or merging any
+records. Back up the database and explicitly reconcile these conflicting master
+records before retrying startup. External tools that write to this database must
+register the same `part_number_key` function; use the application's database
+access layer for maintenance.

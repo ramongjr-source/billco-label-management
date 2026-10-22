@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs'
 import { Readable } from 'node:stream'
+import { partNumberKey } from '../../shared/partNumber.js'
 import type { Product } from '../../shared/product.js'
 import type { ImportField, ProductImportColumns, ProductImportError, ProductImportMapping } from '../../shared/productImport.js'
 import { WorkbookImportError } from './errors.js'
@@ -309,10 +310,11 @@ export async function parseProductWorkbook(buffer: Buffer, requestedSheet?: stri
 
   const occurrences = new Map<string, number>()
   for (const { product } of candidates) {
-    if (product.partNumber) occurrences.set(product.partNumber, (occurrences.get(product.partNumber) ?? 0) + 1)
+    const key = partNumberKey(product.partNumber)
+    if (key) occurrences.set(key, (occurrences.get(key) ?? 0) + 1)
   }
   for (const candidate of candidates) {
-    if ((occurrences.get(candidate.product.partNumber) ?? 0) > 1) {
+    if ((occurrences.get(partNumberKey(candidate.product.partNumber)) ?? 0) > 1) {
       candidate.errors.push({
         row: candidate.row,
         partNumber: candidate.product.partNumber,

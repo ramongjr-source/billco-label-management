@@ -63,8 +63,8 @@ select **Validate workbook** and **Import valid rows**. Choose another product
 worksheet to refresh its detected columns and mapping. The preview
 makes no database changes. Import
 adds new products, updates matching part numbers, and reports invalid and blank
-rows that were skipped. Existing part numbers match exactly after trimming,
-including case and leading zeros. See
+rows that were skipped. Existing part numbers match case-insensitively after trimming; leading zeros
+remain significant. Updates preserve the stored Part Number spelling. See
 [`docs/excel-import.md`](docs/excel-import.md) for workbook columns, description
 consolidation, identifier rules, and size limits.
 
@@ -127,8 +127,8 @@ The application is optimized for manufacturing and warehouse environments where 
 ## Product Database
 
 The implemented store uses SQLite and a shared TypeScript product model with a
-single combined description field. Part numbers are unique, case-sensitive text
-identifiers, preserving leading zeros. Active products can produce labels;
+single combined description field. Part numbers are unique, case-insensitive text
+identifiers, preserving original spelling and leading zeros. Active products can produce labels;
 inactive products can be looked up but cannot produce labels.
 
 Maintain a master list of products including:
