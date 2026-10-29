@@ -1,3 +1,4 @@
+import { PartNumberInput } from './PartNumberInput'
 import { FileSearch, LockKeyhole, Printer, RotateCcw, Search } from 'lucide-react'
 import { labelTypes, type LabelType, type Product } from '../data/products'
 
@@ -14,6 +15,7 @@ interface ProductSearchFormProps {
   labelType: LabelType
   quantityEditable: boolean
   onPartNumberChange: (value: string) => void
+  onSelectProduct: (part: string) => void
   onSearch: () => void
   onPoNumberChange: (value: string) => void
   onLotNumberChange: (value: string) => void
@@ -35,10 +37,10 @@ export function ProductSearchForm(props: ProductSearchFormProps) {
         <div className="field-group">
           <label htmlFor="part-number">Part Number<Required /></label>
           <div className="search-row grid gap-3">
-            <input id="part-number" value={props.partNumber} onChange={(event) => props.onPartNumberChange(event.target.value)} placeholder="Enter a part number" required autoComplete="off" aria-describedby="product-search-help product-search-status" aria-invalid={props.searchError} />
+            <PartNumberInput value={props.partNumber} invalid={props.searchError} onChange={props.onPartNumberChange} onSelect={props.onSelectProduct} />
             <button className="button button-primary search-button" type="submit" disabled={props.isSearching}><Search size={23} aria-hidden="true" /> {props.isSearching ? 'Searching…' : 'Search'}</button>
           </div>
-          <p id="product-search-help" className="sr-only">Search the product master by part number.</p>
+          <p id="product-search-help" className="sr-only">Type a part number or description. Use arrow keys to navigate suggestions, Enter to select, and Escape to close.</p>
           <p id="product-search-status" className={props.product?.status === 'active' ? 'sr-only' : `search-status${props.searchError ? ' search-status-error' : ''}`} role="status">{props.searchMessage}</p>
         </div>
         <div className="field-group">

@@ -87,3 +87,21 @@ export function findProductByPartNumber(db: DatabaseSync, partNumber: string): P
     status: row.status as Product['status'],
   }
 }
+
+/** Literal substring matching: SQL wildcard characters have no special meaning. */
+export function searchProducts(db: DatabaseSync, query: string): Product[] {
+  const key = partNumberKey(query)
+  if (!key) return []
+  return db.prepare(`
+    SELECT part_number AS partNumber, description,
+      bulk_fixed_quantity AS bulkFixedQuantity, package_fixed_quantity AS packageFixedQuantity,
+      product_barcode AS productBarcode, bulk_barcode AS bulkBarcode, status
+    FROM products
+    WHERE instr(part_number_key(part_number), ?) > 0
+       OR instr(part_number_key(description), ?) > 0
+    ORDER BY CASE WHEN instr(part_number_key(part_number), ?) = 1 THEN 0
+                  WHEN instr(part_number_key(part_number), ?) > 0 THEN 1 ELSE 2 END,
+             part_number_key(part_number), part_number
+    LIMIT 10
+  `).all(key, key, key, key).map(row => ({ ...row })) as unknown as Product[]
+}

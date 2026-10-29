@@ -28,9 +28,10 @@ other label types. Package Fixed requires its own package quantity and code.
 
 ## Live behavior
 
-Changing a Part Number immediately clears the previous preview and starts an
-automatic lookup after a 300 ms pause. Search and Enter still trigger an
-immediate lookup. Clear, further edits, and leaving the page cancel pending
+Changing a Part Number immediately clears the previous preview and shows
+ranked part-number and description suggestions after a 100 ms pause. Selecting
+a suggestion loads the product and preview. Search and Enter trigger an
+immediate exact lookup. See [autocomplete](autocomplete.md). Clear, further edits, and leaving the page cancel pending
 lookups; old responses cannot restore the previous product.
 
 Label type, operator quantity, PO, and lot edits update the preview immediately.

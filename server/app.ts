@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs'
 import { extname, join, resolve } from 'node:path'
 import type { DatabaseSync } from 'node:sqlite'
 import express from 'express'
-import { findProductByPartNumber } from '../database/index.js'
+import { findProductByPartNumber, searchProducts } from '../database/index.js'
 import { createProductImportRouter } from './productImportRouter.js'
 
 interface AppOptions {
@@ -27,6 +27,26 @@ export function createApp(db: DatabaseSync, options: AppOptions = {}) {
     } catch (error) {
       reportError(error)
       response.status(503).json({ status: 'unavailable' })
+    }
+  })
+
+  app.get('/api/products/search', (request, response) => {
+    try {
+      decodeURIComponent(request.originalUrl.replace(/\+/g, ' '))
+    } catch {
+      response.status(400).json({ error: 'Enter a valid search.' })
+      return
+    }
+    const query = request.query.q
+    if (typeof query !== 'string' || [...query.trim()].length > 256 || /[\u0000-\u001f\u007f]/.test(query)) {
+      response.status(400).json({ error: 'Enter a valid search (up to 256 characters).' })
+      return
+    }
+    try {
+      response.json(searchProducts(db, query))
+    } catch (error) {
+      reportError(error)
+      response.status(500).json({ error: 'Unable to search products.' })
     }
   })
 

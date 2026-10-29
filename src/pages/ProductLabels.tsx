@@ -27,7 +27,6 @@ export function ProductLabels({ initialLabelType, onLabelTypeChange, onNavigateI
   const labelTypeRef = useRef<LabelType>(initialLabelType)
   const requestIdRef = useRef(0)
   const requestControllerRef = useRef<AbortController | null>(null)
-  const autoLookupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const previewRef = useRef<HTMLElement>(null)
   const selectedType = labelTypes.find((type) => type.id === labelType)!
   const labelRules = getLabelRules(labelType)
@@ -37,8 +36,6 @@ export function ProductLabels({ initialLabelType, onLabelTypeChange, onNavigateI
   const previewProduct = missingFixedData ? null : activeProduct
 
   const cancelLookup = useCallback(() => {
-    if (autoLookupTimerRef.current !== null) clearTimeout(autoLookupTimerRef.current)
-    autoLookupTimerRef.current = null
     requestIdRef.current += 1
     requestControllerRef.current?.abort()
     requestControllerRef.current = null
@@ -105,7 +102,6 @@ export function ProductLabels({ initialLabelType, onLabelTypeChange, onNavigateI
     setSearchMessage('')
     setSearchError(false)
     setIsSearching(false)
-    if (value.trim()) autoLookupTimerRef.current = setTimeout(() => { void search(value) }, 300)
   }
 
   function clear() {
@@ -141,6 +137,7 @@ export function ProductLabels({ initialLabelType, onLabelTypeChange, onNavigateI
               poNumber={poNumber} lotNumber={lotNumber} quantity={quantity}
               labelType={labelType} quantityEditable={labelRules.quantityEditable}
               onPartNumberChange={changePartNumber}
+              onSelectProduct={(part) => { void search(part) }}
               onSearch={() => { void search(partNumber) }} onPoNumberChange={setPoNumber} onLotNumberChange={setLotNumber} onQuantityChange={setQuantity}
               onLabelTypeChange={selectLabelType}
               onPreview={() => { previewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); previewRef.current?.focus({ preventScroll: true }) }}
