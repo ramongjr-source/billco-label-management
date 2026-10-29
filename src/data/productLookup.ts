@@ -23,3 +23,11 @@ export async function lookupProduct(partNumber: string, signal: AbortSignal): Pr
   if (!isProduct(product)) throw new ProductLookupError('Product lookup is unavailable. Please try again.')
   return product
 }
+
+export async function searchProducts(query: string, signal: AbortSignal): Promise<Product[]> {
+  const response = await fetch(`/api/products/search?q=${encodeURIComponent(query.trim())}`, { signal })
+  if (!response.ok) throw new ProductLookupError('Product search is unavailable. Please try again.')
+  const products: unknown = await response.json()
+  if (!Array.isArray(products) || !products.every(isProduct)) throw new ProductLookupError('Product search is unavailable. Please try again.')
+  return products
+}

@@ -64,7 +64,8 @@ for (const mode of [
     await page.goto('/')
     await expect(page.getByLabel('Description', { exact: true })).toHaveValue('3/8 Brass Coupling')
     await page.getByRole('textbox', { name: 'Part Number', exact: true }).fill(part)
-    // Changing the part number looks up the imported product without pressing Search.
+    await page.getByRole('textbox', { name: 'Part Number', exact: true }).press('Enter')
+    // Enter loads the imported product without pressing Search.
     await expect(page.getByLabel('Description', { exact: true })).toHaveValue('HEX HEAD PIPE PLUG 1/2')
     await page.getByRole('radio', { name: mode.name, exact: true }).check()
     const quantity = page.getByRole('spinbutton', { name: 'Quantity', exact: true })
@@ -90,6 +91,7 @@ test('preserves long Part Numbers and keeps label text within desktop and mobile
   await importProduct(request, part, description)
   await page.goto('/')
   await page.getByRole('textbox', { name: 'Part Number', exact: true }).fill(part)
+  await page.getByRole('textbox', { name: 'Part Number', exact: true }).press('Enter')
   await expect(page.getByLabel('Description', { exact: true })).toHaveValue(description)
   for (const width of [1536, 390]) {
     await page.setViewportSize({ width, height: 1024 })
@@ -126,6 +128,7 @@ for (const mode of [
     await expect(page.getByLabel('Description', { exact: true })).toHaveValue('3/8 Brass Coupling')
     await page.getByRole('radio', { name: mode.name, exact: true }).check()
     await page.getByRole('textbox', { name: 'Part Number', exact: true }).fill(part)
+    await page.getByRole('textbox', { name: 'Part Number', exact: true }).press('Enter')
     await expect(page.getByLabel('Description', { exact: true })).toHaveValue(description)
     if (!mode.barcode) await page.getByRole('spinbutton', { name: 'Quantity', exact: true }).fill('35')
     const label = page.locator('.product-label').first()
@@ -156,6 +159,7 @@ for (const mode of [
       else await expect(label.locator('.barcode-group')).toHaveCount(0)
     }
     await page.getByRole('textbox', { name: 'Part Number', exact: true }).fill(longPart)
+    await page.getByRole('textbox', { name: 'Part Number', exact: true }).press('Enter')
     await expect(page.getByLabel('Description', { exact: true })).toHaveValue(longDescription)
     const value = label.locator('.label-description strong')
     await expect(value).toHaveText(/\.\.\.$/)

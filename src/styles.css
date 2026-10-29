@@ -284,3 +284,14 @@ input[type="radio"], input[type="checkbox"] { width: 22px; height: 22px; accent-
 .import-mapping { margin: 16px 0; min-width: 0; }
 .import-mapping-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; margin-top: 16px; }
 .import-mapping details ul { max-height: 180px; overflow: auto; padding: 10px; overflow-wrap: anywhere; }
+
+.part-autocomplete { position: relative; min-width: 0; }
+.part-autocomplete > input { width: 100%; }
+.suggestions-panel { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 20; background: white; border: 1px solid #aab8c4; border-radius: 6px; box-shadow: 0 8px 20px #142d4530; }
+.suggestions-panel ul { list-style: none; margin: 0; padding: 4px; max-height: 320px; overflow-y: auto; }
+.suggestions-panel li { padding: 10px 12px; cursor: pointer; border-radius: 3px; }
+.suggestions-panel li[aria-selected="true"] { background: #e5eff8; outline: 2px solid #3174a5; outline-offset: -2px; }
+.suggestions-panel strong, .suggestions-panel span { display: block; overflow-wrap: anywhere; }
+.suggestions-panel strong { color: #173d60; }
+.suggestions-panel span { font-size: 14px; color: #405468; }
+.suggestions-message { padding: 8px 12px; margin: 0; font-size: 14px; }

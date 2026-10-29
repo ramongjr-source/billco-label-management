@@ -125,6 +125,7 @@ test('does not restore an old product when the part number changes during a look
   await expect(page.getByRole('button', { name: 'Searching…', exact: true })).toBeDisabled()
   const nextLookup = await holdLookup(page, '5082')
   await page.getByRole('textbox', { name: 'Part Number', exact: true }).fill('5082')
+  await page.getByRole('textbox', { name: 'Part Number', exact: true }).press('Enter')
   await nextLookup.requested
   const response = page.waitForResponse((response) => isLookup(response.request(), '5081'))
   await lookup.release()
