@@ -1,14 +1,20 @@
 # Official Billco application logo
 
-The application uses the original PNG supplied for
+The application uses the official Billco artwork supplied for
 [Issue #24](https://github.com/ramongjr-source/billco-label-management/issues/24),
-committed at `public/assets/billco-logo.png`. It was copied directly from the
-uploaded `Screenshot 2026-10-29 095309.zip`; no image processing was applied.
+committed at `public/assets/billco-logo.png`. It is based on the PNG in the
+uploaded `Screenshot 2026-10-29 095309.zip`, with its light-gray background
+removed as requested.
 
-- Native size: 457 × 201 pixels (RGBA PNG).
-- SHA-256: `818eeca394e4b22c186d7581ae6e8cbacc457ed3cc28dc2c518b9caccc15e801`.
-- The asset matches the uploaded file byte-for-byte. The original light-gray
-  background, artwork, colors, and alpha channel are preserved.
+- Canvas: 457 × 201 pixels (RGBA PNG), retaining the original aspect ratio,
+  artwork placement, and margins.
+- Transparent asset SHA-256:
+  `6caa7c9d8efe09e32fb3a2ddf5802ef2509c376688538a1dfe378cffabf88feb`.
+- The outer background and spaces inside the black letters are transparent.
+  Background edge pixels use alpha to avoid a light fringe on the blue shell.
+- Opaque foreground pixels retain their original colors. The blue CORPORATION
+  banner and all of its white lettering remain intact. No shadows, outlines,
+  added artwork, or CSS effects are used.
 
 `src/components/BillcoLogo.tsx` references `/assets/billco-logo.png`, served by
 the application itself in development and production. No runtime GitHub URL
@@ -55,3 +61,24 @@ the shared header; mobile captures show the header and expanded navigation.
 | Mobile navigation: before | Mobile navigation: after |
 | --- | --- |
 | ![Mobile before](screenshots/official-logo/before-mobile.png) | ![Mobile after](screenshots/official-logo/after-mobile.png) |
+
+## Transparent-background refinement
+
+These captures compare the original opaque logo with the transparent local
+asset on the existing blue header/sidebar background.
+
+| Desktop: opaque background | Desktop: transparent background |
+| --- | --- |
+| ![Opaque desktop logo](screenshots/transparent-logo/before-desktop.png) | ![Transparent desktop logo](screenshots/transparent-logo/after-desktop.png) |
+
+| Laptop: opaque background | Laptop: transparent background |
+| --- | --- |
+| ![Opaque laptop logo](screenshots/transparent-logo/before-laptop.png) | ![Transparent laptop logo](screenshots/transparent-logo/after-laptop.png) |
+
+| Import: opaque background | Import: transparent background |
+| --- | --- |
+| ![Opaque import logo](screenshots/transparent-logo/before-import.png) | ![Transparent import logo](screenshots/transparent-logo/after-import.png) |
+
+| Mobile: opaque background | Mobile: transparent background |
+| --- | --- |
+| ![Opaque mobile logo](screenshots/transparent-logo/before-mobile.png) | ![Transparent mobile logo](screenshots/transparent-logo/after-mobile.png) |
