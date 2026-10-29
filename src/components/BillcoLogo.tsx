@@ -1,11 +1,12 @@
+// Original official artwork, served from the repository's public/assets folder.
+const billcoLogoUrl = '/assets/billco-logo.png'
+
 export function BillcoLogo({ className = '' }: { className?: string }) {
   return (
-    <span className={`billco-logo ${className}`} role="img" aria-label="Billco Corporation">
-      <span className="billco-initial" aria-hidden="true">B</span>
-      <span className="billco-wordmark" aria-hidden="true">
-        <span className="billco-name">ILLCO</span>
-        <span className="billco-corporation">CORPORATION</span>
-      </span>
-    </span>
+    <img
+      className={`billco-logo ${className}`}
+      src={billcoLogoUrl}
+      alt="Billco Corporation"
+    />
   )
 }
