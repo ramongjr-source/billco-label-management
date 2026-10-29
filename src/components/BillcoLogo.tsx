@@ -7,6 +7,8 @@ export function BillcoLogo({ className = '' }: { className?: string }) {
       className={`billco-logo ${className}`}
       src={billcoLogoUrl}
       alt="Billco Corporation"
+      width={457}
+      height={201}
     />
   )
 }
