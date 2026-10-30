@@ -60,9 +60,34 @@ function CompactDescription({ description }: { description: string }) {
     let active = true
     const fit = () => {
       if (!active) return
-      const fits = () => element.scrollHeight <= element.clientHeight && element.scrollWidth <= element.clientWidth
+      element.style.fontSize = ''
+      const maximum = parseFloat(getComputedStyle(element).fontSize)
+      // Keep compact descriptions readable; only ellipsize after trying a
+      // smaller font in the existing two-line description area.
+      const minimum = maximum * (4 / 5.8)
+      const fits = () => {
+        const twoLines = 2 * parseFloat(getComputedStyle(element).lineHeight) + 1
+        const range = document.createRange()
+        range.selectNodeContents(element)
+        return range.getBoundingClientRect().height <= twoLines
+          && element.scrollHeight <= element.clientHeight
+          && element.scrollWidth <= element.clientWidth
+      }
       element.textContent = text
       if (fits()) return
+      element.style.fontSize = `${minimum}px`
+      if (fits()) {
+        let low = minimum
+        let high = maximum
+        for (let step = 0; step < 12; step += 1) {
+          const size = (low + high) / 2
+          element.style.fontSize = `${size}px`
+          if (fits()) low = size
+          else high = size
+        }
+        element.style.fontSize = `${low}px`
+        return
+      }
       const characters = Array.from(text)
       const shortened = (length: number) => `${characters.slice(0, length).join('').trimEnd()}...`
       let low = 0
