@@ -82,3 +82,30 @@ asset on the existing blue header/sidebar background.
 | Mobile: opaque background | Mobile: transparent background |
 | --- | --- |
 | ![Opaque mobile logo](screenshots/transparent-logo/before-mobile.png) | ![Transparent mobile logo](screenshots/transparent-logo/after-mobile.png) |
+
+## White wordmark for dark navigation surfaces
+
+The dark application header explicitly requests `BillcoLogo variant="dark"`,
+which loads `public/assets/billco-logo-dark.svg`. The component defaults to the
+original PNG so labels, exports, and future print consumers retain the original
+artwork unless they explicitly select the dark-surface variant. No additional
+sidebar logo or layout changes are introduced.
+
+The standalone SVG embeds the original 457×201 PNG and changes only dark ink to
+white. It uses the original alpha silhouette, retaining the blue CORPORATION
+banner and its white lettering exactly. No generated/redrawn logo is shipped.
+The original PNG is unchanged (SHA-256
+`6caa7c9d8efe09e32fb3a2ddf5802ef2509c376688538a1dfe378cffabf88feb`).
+
+Browser pixel comparison at native dimensions verifies zero alpha mismatches,
+19,568 dark-ink pixels changed to white, and zero banner color mismatches.
+Header, logo, sidebar, platform heading, and workspace bounding rectangles are
+identical before/after at 1920×1080, 1366×900, and 390×844. The mobile comparison
+includes expanded navigation. All variants retain accessible alt text and the
+same native width/height attributes.
+
+| Surface | Before | After |
+| --- | --- | --- |
+| Desktop header | ![Before](screenshots/white-logo/before-desktop-header.png) | ![After](screenshots/white-logo/after-desktop-header.png) |
+| Laptop header | ![Before](screenshots/white-logo/before-laptop-header.png) | ![After](screenshots/white-logo/after-laptop-header.png) |
+| Mobile navigation | ![Before](screenshots/white-logo/before-mobile.png) | ![After](screenshots/white-logo/after-mobile.png) |
