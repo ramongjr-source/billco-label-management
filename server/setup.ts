@@ -1,3 +1,4 @@
+import { seedDevelopmentPrinters } from '../database/printers.js'
 import { resolve } from 'node:path'
 import { migrateDatabase, openProductDatabase, seedDevelopmentProducts } from '../database/index.js'
 
@@ -7,6 +8,7 @@ try {
   try {
     const migrations = migrateDatabase(db)
     const products = seedDevelopmentProducts(db)
+    seedDevelopmentPrinters(db)
     console.info(`Database initialized at ${databasePath}; applied ${migrations} migration(s), inserted ${products} development product(s).`)
   } finally {
     db.close()

@@ -10,6 +10,7 @@ const migrations = [
   { version: 1, filename: '001-create-products.sql' },
   { version: 2, filename: '002-separate-barcodes.sql' },
   { version: 3, filename: '003-case-insensitive-parts.sql' },
+  { version: 4, filename: '004-print-foundation.sql' },
 ] as const
 
 export function openProductDatabase(filename: string): DatabaseSync {
