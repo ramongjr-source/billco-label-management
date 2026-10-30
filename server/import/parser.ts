@@ -1,6 +1,6 @@
 import ExcelJS from 'exceljs'
 import { Readable } from 'node:stream'
-import { partNumberKey } from '../../shared/partNumber.js'
+import { isValidPartNumber, partNumberKey } from '../../shared/partNumber.js'
 import type { Product } from '../../shared/product.js'
 import type { ImportField, ProductImportColumns, ProductImportError, ProductImportMapping } from '../../shared/productImport.js'
 import { WorkbookImportError } from './errors.js'
@@ -258,7 +258,7 @@ export async function parseProductWorkbook(buffer: Buffer, requestedSheet?: stri
     }
 
     const partNumber = read('partNumber', identifier, '').trim()
-    if (!partNumber || [...partNumber].length > 64 || /[\u0000-\u001f\u007f]/.test(partNumber)) {
+    if (!isValidPartNumber(partNumber)) {
       if (!errors.some((error) => error.field === fieldLabels.partNumber)) {
         addError(fieldLabels.partNumber, 'Enter a nonblank part number of at most 64 characters without control characters.')
       }

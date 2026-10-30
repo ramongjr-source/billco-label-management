@@ -1,3 +1,4 @@
+import { isValidPartNumber } from '../shared/partNumber.js'
 import { randomUUID } from 'node:crypto'
 import type { DatabaseSync } from 'node:sqlite'
 import { findProductByPartNumber } from '../database/index.js'
@@ -59,7 +60,8 @@ export class RecordingPrintService implements PrintService {
     const lotNumber = text(data.lotNumber, 'lot number', 32)
     const poNumber = text(data.poNumber, 'PO number', 32, bulk)
     const expected = object(data.product)
-    const partNumber = text(expected.partNumber, 'part number', 64)
+    if (!isValidPartNumber(expected.partNumber)) throw new PrintValidationError('Enter a valid part number.')
+    const partNumber = expected.partNumber.trim()
     // Canonical field order makes retry comparison independent of JSON key order.
     const expectedProduct = Object.fromEntries(['partNumber', 'description', 'bulkFixedQuantity', 'packageFixedQuantity', 'productBarcode', 'bulkBarcode', 'status'].map(key => [key, expected[key]]))
     const requestJson = JSON.stringify({ printerId, type, product: expectedProduct, labelQuantity, printQuantity, lotNumber, poNumber: bulk ? poNumber : '' })

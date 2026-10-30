@@ -1,3 +1,4 @@
+import { isValidPartNumber } from '../shared/partNumber.js'
 import { existsSync } from 'node:fs'
 import { extname, join, resolve } from 'node:path'
 import type { DatabaseSync } from 'node:sqlite'
@@ -66,7 +67,7 @@ export function createApp(db: DatabaseSync, options: AppOptions = {}) {
 
     const query = request.query.partNumber
     const partNumber = typeof query === 'string' ? query.trim() : ''
-    if (!partNumber || [...partNumber].length > 64 || /[\u0000-\u001f\u007f]/.test(partNumber)) {
+    if (!isValidPartNumber(partNumber)) {
       response.status(400).json({ error: 'Enter a valid part number (1–64 characters).' })
       return
     }

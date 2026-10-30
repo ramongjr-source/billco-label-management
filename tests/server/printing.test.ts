@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import ExcelJS from 'exceljs'
 import { randomUUID } from 'node:crypto'
 import { once } from 'node:events'
 import { mkdtempSync, rmSync } from 'node:fs'
@@ -122,4 +123,52 @@ test('event-write failure rolls back the job and permits a clean retry', t => {
   assert.equal(service.listJobs().jobs.length, 0)
   db.exec('DROP TRIGGER fail_print_event')
   assert.equal(service.recordJob(request).created, true)
+})
+
+
+test('import, lookup, storage, and job recording share Unicode part-number boundaries', async t => {
+  const { db, request } = setup(t)
+  const server = createApp(db).listen(0, '127.0.0.1')
+  await once(server, 'listening')
+  t.after(() => new Promise<void>(resolve => server.close(() => resolve())))
+  const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`
+  const valid = ['😀'.repeat(64), 'A'.repeat(32) + '😀'.repeat(32), 'A'.repeat(64)]
+  const invalid = ['😀'.repeat(65), 'A'.repeat(65), 'part\nnumber', '   ']
+  const workbook = new ExcelJS.Workbook()
+  workbook.addWorksheet('BillcoMaster').addRows([
+    ['BillcoPart#', 'Description', 'StdPackQty', 'BulkQty', 'ProductBarcode', 'BulkBarcode'],
+    ...[...valid, ...invalid].map(part => [part, 'Unicode product', 50, 500, 'PRODUCT-CODE', 'BULK-CODE']),
+  ])
+  const form = new FormData()
+  form.append('file', new Blob([new Uint8Array(await workbook.xlsx.writeBuffer())]), 'unicode.xlsx')
+  const imported = await fetch(`${url}/api/products/import`, { method: 'POST', body: form })
+  assert.equal(imported.status, 200)
+  const result = await imported.json()
+  assert.equal(result.added, valid.length)
+  assert.equal(result.invalidRows, invalid.length)
+  const record = (product: unknown, labelType: string, labelQuantity: number) => fetch(`${url}/api/print-jobs`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...request, requestId: randomUUID(), product, labelType, labelQuantity }),
+  })
+  for (const part of valid) {
+    assert.equal(db.prepare('SELECT length(part_number) AS length FROM products WHERE part_number = ?').get(part)?.length, 64)
+    const lookup = await fetch(`${url}/api/products?partNumber=${encodeURIComponent(part)}`)
+    assert.equal(lookup.status, 200)
+    const product = await lookup.json()
+    for (const [type, quantity] of [['bulk-fixed', 500], ['package-fixed', 50], ['bulk-variable', 72], ['bcc', 72]] as const) {
+      const response = await record(product, type, quantity)
+      assert.equal(response.status, 201)
+      const job = await response.json()
+      assert.equal(job.label.product.partNumber, part)
+      assert.equal(job.status, 'recorded')
+    }
+  }
+  for (const part of invalid) {
+    assert.equal((await fetch(`${url}/api/products?partNumber=${encodeURIComponent(part)}`)).status, 400)
+    const response = await record({ ...request.product, partNumber: part }, 'bulk-fixed', 500)
+    assert.equal(response.status, 400)
+    assert.match((await response.json()).error, /valid part number/)
+    assert.throws(() => seedProducts(db, [{ ...request.product, partNumber: part }]), /CHECK constraint/)
+  }
+  assert.equal(new RecordingPrintService(db).listJobs().jobs.length, valid.length * 4)
 })
