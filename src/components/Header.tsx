@@ -12,7 +12,7 @@ export function Header({ menuOpen, onToggleMenu }: HeaderProps) {
       <button className="mobile-menu icon-button" type="button" onClick={onToggleMenu} aria-label="Toggle navigation" aria-expanded={menuOpen} aria-controls="main-navigation">
         <Menu size={24} />
       </button>
-      <div className="header-brand"><BillcoLogo /></div>
+      <div className="header-brand"><BillcoLogo variant="dark" /></div>
       <div className="platform-heading">
         <div className="platform-title">LABELING PLATFORM</div>
         <div className="platform-subtitle">PACKAGING <span>|</span> SHIPPING <span>|</span> WAREHOUSE <span>|</span> CUSTOMER LABELS</div>
