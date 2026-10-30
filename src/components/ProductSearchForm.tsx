@@ -48,21 +48,23 @@ export function ProductSearchForm(props: ProductSearchFormProps) {
           <input id="description" value={props.product?.description ?? ''} readOnly placeholder="Search for a product" />
           {props.product && <p className={`product-status product-status-${props.product.status}`} role="status">Product status: <strong>{props.product.status === 'active' ? 'Active' : 'Inactive'}</strong></p>}
         </div>
-        <div className="field-group">
-          <label htmlFor="customer">Customer</label>
-          <select id="customer" defaultValue="billco-stock"><option value="billco-stock">BILLCO STOCK</option></select>
+        <div className="product-basics">
+          <div className="field-group">
+            <label htmlFor="customer">Customer</label>
+            <select id="customer" defaultValue="billco-stock"><option value="billco-stock">BILLCO STOCK</option></select>
+          </div>
+          <div className="field-group">
+            <label htmlFor="quantity">Quantity<Required /></label>
+            <div className="quantity-input relative">
+              <input id="quantity" type="number" min="1" max="999999" step="1" value={props.quantity} onChange={(event) => props.onQuantityChange(event.target.value)} readOnly={!props.quantityEditable} disabled={!props.canPreview} required aria-describedby="quantity-help" />
+              {!props.quantityEditable && <LockKeyhole size={18} className="quantity-lock" aria-label="Quantity locked" />}
+            </div>
+            <span id="quantity-help" className="sr-only">{props.quantityEditable ? 'Enter a positive whole number, up to 999999.' : 'Fixed quantity from the product master.'}</span>
+          </div>
         </div>
         <div className="field-group grid grid-cols-2 gap-4">
           <div><label htmlFor="po-number">PO Number<Required /></label><input id="po-number" value={props.poNumber} onChange={(event) => props.onPoNumberChange(event.target.value)} required maxLength={32} autoComplete="off" /></div>
           <div><label htmlFor="lot-number">Lot Number<Required /></label><input id="lot-number" value={props.lotNumber} onChange={(event) => props.onLotNumberChange(event.target.value)} required maxLength={32} autoComplete="off" /></div>
-        </div>
-        <div className="field-group">
-          <label htmlFor="quantity">Quantity<Required /></label>
-          <div className="quantity-input relative">
-            <input id="quantity" type="number" min="1" max="999999" step="1" value={props.quantity} onChange={(event) => props.onQuantityChange(event.target.value)} readOnly={!props.quantityEditable} disabled={!props.canPreview} required aria-describedby="quantity-help" />
-            {!props.quantityEditable && <LockKeyhole size={18} className="quantity-lock" aria-label="Quantity locked" />}
-          </div>
-          <span id="quantity-help" className="sr-only">{props.quantityEditable ? 'Enter a positive whole number, up to 999999.' : 'Fixed quantity from the product master.'}</span>
         </div>
         <fieldset className="label-type-group">
           <legend>Label Type</legend>

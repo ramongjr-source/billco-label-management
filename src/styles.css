@@ -292,3 +292,34 @@ input[type="radio"], input[type="checkbox"] { width: 22px; height: 22px; accent-
 .print-history { list-style: none; padding: 0; }
 .print-history li { border-top: 1px solid #c7ced7; padding: 12px 0; overflow-wrap: anywhere; }
 .print-history p { font-size: 14px; margin: 4px 0; }
+
+/* Workspace controls only: label surfaces and their rendering are unchanged. */
+.print-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; }
+.print-heading p { font-size: 14px; color: #576274; }
+.print-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) 120px 120px; gap: 12px; align-items: start; margin-top: 12px; }
+.print-toolbar .field-group { margin: 0; }
+.print-toolbar > button { margin-top: 26px; font-weight: 700; }
+.print-panel summary { margin: 8px 0 0; }
+
+@media (min-width: 1151px) {
+  .label-workspace { padding: 12px 21px; }
+  .label-workspace .breadcrumb { margin-bottom: 6px; }
+  .label-workspace .page-heading { margin-bottom: 10px; }
+  .label-workspace .page-heading h1 { font-size: 32px; }
+  .label-workspace .page-heading p { font-size: 18px; }
+  .label-workspace .information-panel { padding-bottom: 12px; }
+  .label-workspace .information-panel .field-group { margin-bottom: 6px; }
+  .label-workspace .panel-heading { padding: 6px 0 7px; margin-bottom: 4px; }
+  .product-basics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .label-workspace .label-type-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 16px; margin-bottom: 8px; }
+  .label-workspace .label-type-group legend { margin-bottom: 4px; }
+  .label-workspace .form-actions .button { height: 40px; }
+  .label-workspace .preview-column { padding-top: 0; }
+  .label-workspace .print-panel { padding: 12px 18px; margin-top: 12px; }
+  .label-workspace .print-panel h2 { font-size: 22px; }
+}
+
+@media (max-width: 600px) {
+  .print-toolbar { grid-template-columns: minmax(0, 1fr) 110px; }
+  .print-toolbar > button { grid-column: 1 / -1; margin-top: 0; min-height: 44px; }
+}

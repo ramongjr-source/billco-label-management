@@ -379,6 +379,7 @@ test('case-insensitive lookup preserves master spelling in every label mode', as
   const imported = await request.post('/api/products/import', { multipart: { file } })
   expect(imported.ok()).toBeTruthy()
   await page.getByRole('button', { name: 'Product Labels', exact: true }).click()
+  await expect(page.getByLabel('Description', { exact: true })).toHaveValue('3/8 Brass Coupling')
   const input = page.getByRole('textbox', { name: 'Part Number', exact: true })
   for (const mode of ['Package Fixed Qty', 'Bulk Fixed Qty', 'Bulk Variable Qty', 'BCC']) {
     await page.getByRole('radio', { name: mode, exact: true }).check()

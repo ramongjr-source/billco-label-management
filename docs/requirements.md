@@ -112,3 +112,31 @@ Fixed-quantity labels shall also display:
 - Missing bulk quantity or barcode affects only Bulk Fixed availability.
 - Render previews only; printing, SATO integration, PDF generation, customer
   labels, pallet placards, and Will Call labels are outside this implementation.
+
+## Operator workspace design standard: One Page, No Scroll
+
+All operator-facing label workflows must keep their primary workflow on a single
+screen. The acceptance target is a 1920×1080 workstation at 100% browser zoom and
+100% Windows scaling.
+Product fields, Printer, Print Quantity, PRINT, and the readable label preview
+must be visible simultaneously, including after a job is recorded.
+
+New features must not extend the normal workflow vertically. Reorganize using
+horizontal groups, compact controls, responsive layouts, and collapsible secondary
+panels. Print History is collapsed by default. Opening secondary history may
+use additional space; normal label creation must not depend on opening it.
+Maintain readable inputs, keyboard access, and the existing label rendering.
+Do not achieve fit by clipping content or hiding document overflow.
+
+Apply this standard to Package Fixed, Bulk Fixed, Bulk Variable, BCC, and future
+operator label formats. Add viewport-bound checks when changing workspace layout
+or introducing operator controls. Smaller displays should reorganize secondary
+content responsively rather than reduce the physical label's legibility.
+
+Layout priority: product selection, label preview, printer selection, print
+quantity, then print action. Secondary information must collapse or move into
+expandable sections before it forces normal operation to scroll.
+
+Scrolling exceptions: administration, print history review, product maintenance,
+import validation results, large reports, and audit logs. These exceptions do not
+apply to normal operator label creation and printing.

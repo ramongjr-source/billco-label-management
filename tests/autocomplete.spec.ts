@@ -28,6 +28,8 @@ for (const mode of [
 ]) test(`autocomplete loads ${mode.name} preview and captures dropdown`, async ({ page }) => {
   await page.getByRole('radio', { name: mode.name, exact: true }).check()
   const input = page.getByRole('textbox', { name: 'Part Number', exact: true })
+  // Keyboard selection starts with the pointer outside the suggestion panel.
+  await page.mouse.move(0, 0)
   await input.fill('PA')
   await expect(page.getByRole('listbox', { name: 'Matching products' }).getByRole('option').first()).toContainText('PA.013')
   mkdirSync('docs/screenshots/autocomplete', { recursive: true })

@@ -127,7 +127,7 @@ export function ProductLabels({ initialLabelType, onLabelTypeChange, onNavigateI
       <Header menuOpen={menuOpen} onToggleMenu={() => setMenuOpen((open) => !open)} />
       {menuOpen && <button className="nav-backdrop" type="button" aria-label="Close navigation" onClick={() => setMenuOpen(false)} />}
       <Sidebar open={menuOpen} labelType={labelType} onSelectLabelType={selectLabelType} onNavigateImport={onNavigateImport} />
-      <main id="main-content" className="workspace">
+      <main id="main-content" className="workspace label-workspace">
         <div className="workspace-grid">
           <div className="form-column min-w-0">
             <nav className="breadcrumb flex items-center gap-3" aria-label="Breadcrumb"><span>Product Labels</span><ChevronRight size={17} aria-hidden="true" /><span aria-current="page">{selectedType.name}</span></nav>
