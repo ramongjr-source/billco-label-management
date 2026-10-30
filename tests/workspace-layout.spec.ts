@@ -1,15 +1,24 @@
 import { expect, test } from '@playwright/test'
 
-for (const height of [1080, 1000]) {
+for (const height of [1080, 1000, 940, 900]) {
   test(`desktop workspace keeps the entire workflow visible at 1920×${height}`, async ({ page }) => {
     await page.setViewportSize({ width: 1920, height })
+    await page.addInitScript(() => {
+      Object.assign(window, { workspaceScrollEvents: 0 })
+      window.addEventListener('scroll', () => {
+        const state = window as typeof window & { workspaceScrollEvents: number }
+        state.workspaceScrollEvents += 1
+      })
+    })
     await page.goto('/')
     await expect(page.getByLabel('Description', { exact: true })).toHaveValue('3/8 Brass Coupling')
     await page.getByRole('combobox', { name: 'Printer', exact: true }).selectOption('example-sato-1')
     await page.getByRole('spinbutton', { name: 'Print Quantity', exact: true }).fill('25')
     const fits = () => page.evaluate(() => {
-      const selectors = ['#part-number', '#description', '#customer', '#quantity', '#po-number', '#lot-number', '#printer', '#print-quantity', '.print-toolbar > button', '.product-label', '.preview-panel']
+      const selectors = ['#part-number', '#description', '#customer', '#quantity', '#po-number', '#lot-number', '#printer', '#print-quantity', '.label-type-group', '.form-actions', '.print-toolbar > button', '.product-label', '.preview-panel']
       return {
+        scrollY,
+        scrollEvents: (window as typeof window & { workspaceScrollEvents: number }).workspaceScrollEvents,
         overflow: Math.max(0, document.documentElement.scrollHeight - innerHeight),
         outside: selectors.filter(selector => {
           const r = document.querySelector(selector)!.getBoundingClientRect()
@@ -20,15 +29,33 @@ for (const height of [1080, 1000]) {
     for (const mode of ['Bulk Fixed Qty', 'Package Fixed Qty', 'Bulk Variable Qty', 'BCC']) {
       await page.getByRole('radio', { name: mode, exact: true }).check()
       if (mode === 'Bulk Variable Qty' || mode === 'BCC') await page.getByRole('spinbutton', { name: 'Quantity', exact: true }).fill('75')
-      await expect(page.locator('.print-panel details')).not.toHaveAttribute('open')
-      await expect.poll(fits).toEqual({ overflow: 0, outside: [] })
+      const input = page.getByRole('textbox', { name: 'Part Number', exact: true })
+      await input.fill('5081')
+      await page.getByRole('button', { name: 'Search', exact: true }).click()
+      await expect(page.getByRole('button', { name: 'Search', exact: true })).toBeEnabled()
+      await expect(page.getByLabel('Description', { exact: true })).toHaveValue('3/8 Brass Elbow')
+      if (mode === 'Bulk Variable Qty' || mode === 'BCC') await page.getByRole('spinbutton', { name: 'Quantity', exact: true }).fill('75')
+      await page.getByRole('textbox', { name: 'PO Number', exact: true }).fill('PO-31')
+      await page.getByRole('textbox', { name: 'Lot Number', exact: true }).fill('LOT-31')
+      for (const details of await page.locator('.print-panel details').all()) await expect(details).not.toHaveAttribute('open')
+      await expect.poll(fits).toEqual({ scrollY: 0, scrollEvents: 0, overflow: 0, outside: [] })
+      await page.getByRole('button', { name: 'PREVIEW', exact: true }).click()
+      await expect.poll(fits).toEqual({ scrollY: 0, scrollEvents: 0, overflow: 0, outside: [] })
+      await page.getByRole('combobox', { name: 'Printer', exact: true }).selectOption('example-sato-1')
+      await page.getByRole('spinbutton', { name: 'Print Quantity', exact: true }).fill('25')
+      await page.getByRole('combobox', { name: 'Printer', exact: true }).focus()
+      await page.keyboard.press('Tab')
+      await expect(page.getByRole('spinbutton', { name: 'Print Quantity', exact: true })).toBeFocused()
+      await page.keyboard.press('Tab')
+      await expect(page.getByRole('button', { name: 'PRINT', exact: true })).toBeFocused()
+      await expect.poll(fits).toEqual({ scrollY: 0, scrollEvents: 0, overflow: 0, outside: [] })
       const label = await page.locator('.product-label').boundingBox()
       expect(label!.width).toBe(435)
       const saved = page.waitForResponse(response => response.url().endsWith('/api/print-jobs') && response.request().method() === 'POST')
       await page.getByRole('button', { name: 'PRINT', exact: true }).click()
       expect((await saved).status()).toBe(201)
       await expect(page.getByRole('status').filter({ hasText: 'Job recorded:' })).toBeVisible()
-      await expect.poll(fits).toEqual({ overflow: 0, outside: [] })
+      await expect.poll(fits).toEqual({ scrollY: 0, scrollEvents: 0, overflow: 0, outside: [] })
     }
   })
 }

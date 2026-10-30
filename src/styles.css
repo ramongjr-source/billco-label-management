@@ -310,7 +310,7 @@ input[type="radio"], input[type="checkbox"] { width: 22px; height: 22px; accent-
   .label-workspace .information-panel { padding-bottom: 12px; }
   .label-workspace .information-panel .field-group { margin-bottom: 6px; }
   .label-workspace .panel-heading { padding: 6px 0 7px; margin-bottom: 4px; }
-  .product-basics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+
   .label-workspace .label-type-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 16px; margin-bottom: 8px; }
   .label-workspace .label-type-group legend { margin-bottom: 4px; }
   .label-workspace .form-actions .button { height: 40px; }
@@ -322,4 +322,36 @@ input[type="radio"], input[type="checkbox"] { width: 22px; height: 22px; accent-
 @media (max-width: 600px) {
   .print-toolbar { grid-template-columns: minmax(0, 1fr) 110px; }
   .print-toolbar > button { grid-column: 1 / -1; margin-top: 0; min-height: 44px; }
+}
+
+/* Reserve browser/OS chrome space: the operator workflow also fits at 900px high. */
+.print-secondary { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+.print-secondary > details { min-width: 0; }
+.print-secondary > details[open] { flex-basis: 100%; }
+.print-help p { font-size: 14px; margin: 8px 0; }
+@media (min-width: 1151px) {
+  .label-shell { grid-template-rows: 68px 1fr; }
+  .label-shell .header-brand .billco-logo { max-height: 52px; width: auto; max-width: 100%; }
+  .label-shell .platform-title { font-size: 25px; }
+  .label-shell .platform-subtitle { margin-top: 3px; }
+  .label-shell .sidebar { min-height: calc(100dvh - 68px); padding: 10px 13px; }
+  .label-shell .sidebar .nav-heading { min-height: 40px; padding-top: 7px; padding-bottom: 7px; font-size: 17px; }
+  .label-shell .sidebar .nav-item { min-height: 28px; padding-top: 3px; padding-bottom: 3px; font-size: 16px; }
+  .label-shell .sidebar .nav-section + .nav-section { margin-top: 10px; padding-top: 4px; }
+  .label-shell .sidebar-note { padding-top: 12px; }
+  .label-workspace { padding: 8px 21px; }
+  .label-workspace .page-heading h1 { font-size: 28px; }
+  .label-workspace .page-heading p { margin-top: 2px; font-size: 16px; }
+  .product-identity { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, .7fr); gap: 16px; }
+  .product-settings { display: grid; grid-template-columns: minmax(0, .55fr) minmax(0, 1.45fr); gap: 16px; align-items: start; }
+  .label-workspace .product-settings .label-type-group { gap: 0 12px; }
+  .label-workspace .product-settings .choice-row { font-size: 16px; }
+  .label-workspace .search-row { grid-template-columns: minmax(0, 1fr) 110px; }
+  .label-workspace .preview-panel { padding-top: 6px; padding-bottom: 6px; }
+  .label-workspace .preview-heading { padding-bottom: 6px; }
+  .label-workspace .preview-heading h2 { font-size: 22px; line-height: 1.2; }
+  .label-workspace .preview-stage { padding-top: 6px; padding-bottom: 6px; }
+  .label-workspace .preview-policy { padding-top: 4px; line-height: 1.2; }
+  .label-workspace .print-panel { margin-top: 8px; padding: 10px 18px; }
+  .label-workspace .print-toolbar { margin-top: 8px; }
 }
