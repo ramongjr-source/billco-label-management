@@ -122,7 +122,7 @@ export function ProductLabels({ initialLabelType, onLabelTypeChange, onNavigateI
   }
 
   return (
-    <div className="app-shell">
+    <div className="app-shell label-shell">
       <a href="#main-content" className="skip-link">Skip to label workspace</a>
       <Header menuOpen={menuOpen} onToggleMenu={() => setMenuOpen((open) => !open)} />
       {menuOpen && <button className="nav-backdrop" type="button" aria-label="Close navigation" onClick={() => setMenuOpen(false)} />}
@@ -141,7 +141,13 @@ export function ProductLabels({ initialLabelType, onLabelTypeChange, onNavigateI
               onSelectProduct={(part) => { void search(part) }}
               onSearch={() => { void search(partNumber) }} onPoNumberChange={setPoNumber} onLotNumberChange={setLotNumber} onQuantityChange={setQuantity}
               onLabelTypeChange={selectLabelType}
-              onPreview={() => { previewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); previewRef.current?.focus({ preventScroll: true }) }}
+              onPreview={() => {
+                const panel = previewRef.current
+                if (!panel) return
+                const bounds = panel.getBoundingClientRect()
+                if (bounds.top < 0 || bounds.bottom > window.innerHeight) panel.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                panel.focus({ preventScroll: true })
+              }}
               onClear={clear}
             />
             <PrintControls product={previewProduct} labelType={labelType} quantity={quantity} poNumber={poNumber} lotNumber={lotNumber} />

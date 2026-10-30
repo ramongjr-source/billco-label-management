@@ -140,3 +140,19 @@ expandable sections before it forces normal operation to scroll.
 Scrolling exceptions: administration, print history review, product maintenance,
 import validation results, large reports, and audit logs. These exceptions do not
 apply to normal operator label creation and printing.
+
+
+### Monitor size is not browser content size
+
+The 1080p monitor requirement is a hard pass/fail workflow requirement, not a
+1080px CSS-viewport assumption. Reserve room for Windows and browser chrome.
+Regression checks include 1920×900 usable content pixels (180px reserved), plus
+940, 1000, and 1080px heights at scale 1 / 100% zoom. Keep all eleven primary
+fields/actions and the full preview visible through lookup, mode selection,
+PO/LOT entry, PREVIEW focus, keyboard navigation, printer/copy selection, and
+job recording. Require zero document overflow, zero scroll offset, and zero
+window scroll events throughout. Viewport-fit screenshots alone are insufficient.
+
+A physical Windows workstation acceptance test remains the final acceptance
+step; simulated Chromium viewport evidence must not be presented as a physical
+Windows desktop capture or automatically close a reopened acceptance issue.

@@ -84,8 +84,9 @@ export function PrintControls({ product, labelType, quantity, poNumber, lotNumbe
       <div className="field-group"><label htmlFor="print-quantity">Print Quantity</label><input id="print-quantity" type="number" min="1" max="999999" step="1" value={printQuantity} disabled={submitting} onChange={event => setPrintQuantity(event.target.value)} aria-describedby="print-quantity-help" /></div>
       <button className="button button-primary" type="button" disabled={!canRecord || submitting} onClick={() => { void submit() }}>{submitting ? 'Recording…' : 'PRINT'}</button>
     </div>
-    <p id="print-quantity-help">Number of labels to produce; separate from the quantity shown on each label.</p>
     {message && <p role="status">{message}</p>}
+    <div className="print-secondary">
+    <details className="print-help"><summary>Print help</summary><p id="print-quantity-help">Number of labels to produce; separate from the quantity shown on each label.</p></details>
     <details><summary>Print history</summary>
       <button className="button button-secondary" type="button" disabled={historyLoading || submitting} onClick={() => { void history() }}>Refresh history</button>
       {historyError && <p role="alert">{historyError}</p>}
@@ -98,5 +99,6 @@ export function PrintControls({ product, labelType, quantity, poNumber, lotNumbe
       </li>)}</ol>
       {nextBefore !== null && <button className="button button-secondary" type="button" disabled={historyLoading || submitting} onClick={() => { void history(nextBefore) }}>Load older jobs</button>}
     </details>
+    </div>
   </section>
 }
