@@ -68,18 +68,23 @@ export function PrintControls({ product, labelType, quantity, poNumber, lotNumbe
   }
 
   return <section className="panel print-panel" aria-labelledby="print-heading">
-    <h2 id="print-heading">Print job</h2>
-    <p>Record jobs for review. Physical printing is not available yet.</p>
-    <div className="field-group"><label htmlFor="printer">Printer</label>
-      <select id="printer" value={printerId} disabled={loading || submitting} onChange={event => {
-        setPrinterId(event.target.value)
-        try { localStorage.setItem(storageKey, event.target.value) } catch { /* Selection still works without browser storage. */ }
-      }}><option value="">{loading ? 'Loading printers…' : 'Select a printer'}</option>{printers.filter(printer => printer.status === 'active').map(printer => <option key={printer.id} value={printer.id}>{printer.name} · {printer.model}</option>)}</select>
-      {printerError && <p role="alert">{printerError}</p>}
-      {!loading && !printerError && !printers.some(printer => printer.status === 'active') && <p>No printers available. Ask your administrator to configure a printer.</p>}
+    <div className="print-heading">
+      <h2 id="print-heading">Print job</h2>
+      <p>Record jobs for review. Physical printing is not available yet.</p>
     </div>
-    <div className="field-group"><label htmlFor="print-quantity">Print Quantity</label><input id="print-quantity" type="number" min="1" max="999999" step="1" value={printQuantity} disabled={submitting} onChange={event => setPrintQuantity(event.target.value)} aria-describedby="print-quantity-help" /><p id="print-quantity-help">Number of labels to produce; separate from the quantity shown on each label.</p></div>
-    <button className="button button-primary" type="button" disabled={!canRecord || submitting} onClick={() => { void submit() }}>{submitting ? 'Recording…' : 'PRINT'}</button>
+    <div className="print-toolbar">
+      <div className="field-group"><label htmlFor="printer">Printer</label>
+        <select id="printer" value={printerId} disabled={loading || submitting} onChange={event => {
+          setPrinterId(event.target.value)
+          try { localStorage.setItem(storageKey, event.target.value) } catch { /* Selection still works without browser storage. */ }
+        }}><option value="">{loading ? 'Loading printers…' : 'Select a printer'}</option>{printers.filter(printer => printer.status === 'active').map(printer => <option key={printer.id} value={printer.id}>{printer.name} · {printer.model}</option>)}</select>
+        {printerError && <p role="alert">{printerError}</p>}
+        {!loading && !printerError && !printers.some(printer => printer.status === 'active') && <p>No printers available. Ask your administrator to configure a printer.</p>}
+      </div>
+      <div className="field-group"><label htmlFor="print-quantity">Print Quantity</label><input id="print-quantity" type="number" min="1" max="999999" step="1" value={printQuantity} disabled={submitting} onChange={event => setPrintQuantity(event.target.value)} aria-describedby="print-quantity-help" /></div>
+      <button className="button button-primary" type="button" disabled={!canRecord || submitting} onClick={() => { void submit() }}>{submitting ? 'Recording…' : 'PRINT'}</button>
+    </div>
+    <p id="print-quantity-help">Number of labels to produce; separate from the quantity shown on each label.</p>
     {message && <p role="status">{message}</p>}
     <details><summary>Print history</summary>
       <button className="button button-secondary" type="button" disabled={historyLoading || submitting} onClick={() => { void history() }}>Refresh history</button>
