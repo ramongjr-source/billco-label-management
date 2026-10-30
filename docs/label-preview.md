@@ -48,7 +48,9 @@ calibrate physical inches or certify printer output or barcode scanability.
 Complete imported identifiers are preserved. Part Number fitting responds to
 content, available space, and viewport changes. The existing 3x5 description
 fitting remains unchanged. For all 3x2 formats, nonblank descriptions wrap into
-at most two lines and truncate overflow with `...`; the full description is
+at most two lines, using the allocated description area and reducing the font
+from 5.8 to 4 container-width units as needed before truncating overflow with
+`...`; the full description is
 available on hover. Blank descriptions omit the heading and its allocated row.
 Other compact fields use the remaining space while preserving Part Number's
 size and prominence. Existing data length limits apply.

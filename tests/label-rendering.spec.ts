@@ -117,10 +117,10 @@ for (const mode of [
   { name: 'Package Fixed Qty', barcode: '000123456789' },
   { name: 'BCC', barcode: null },
 ]) {
-  test(`${mode.name} wraps descriptions into two lines and truncates overflow without shrinking Part Number`, async ({ page, request }) => {
+  test(`${mode.name} fits descriptions within two lines and truncates overflow without shrinking Part Number`, async ({ page, request }) => {
     const part = `PA-${randomUUID().slice(0, 4)}`
     const longPart = `PB-${randomUUID().slice(0, 4)}`
-    const description = '6061 ALUMINUM TT FULL COUPLINGS'
+    const description = 'BLK TAPER TAPPED FULL COUPLINGS'
     const longDescription = 'BLK EXTRA HEAVY MALLEABLE FITTINGS WITH ADDITIONAL SPECIFICATIONS '.repeat(6).trim()
     await importProduct(request, part, description)
     await importProduct(request, longPart, longDescription)
@@ -154,7 +154,7 @@ for (const mode of [
         const range = document.createRange()
         range.selectNodeContents(node)
         return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size
-      })).toBe(2)
+      })).toBeLessThanOrEqual(2)
       if (mode.barcode) await expect(label.locator('.barcode-value')).toHaveText(mode.barcode)
       else await expect(label.locator('.barcode-group')).toHaveCount(0)
     }
@@ -180,5 +180,31 @@ for (const mode of [
     await expect(expanded.locator('.label-description strong')).toHaveText(/\.\.\.$/)
     if (mode.barcode) await expect(expanded.locator('.barcode-value')).toHaveText(mode.barcode)
     else await expect(expanded.locator('.barcode-group')).toHaveCount(0)
+  })
+}
+
+for (const mode of ['Package Fixed Qty', 'BCC']) {
+  test(`${mode} fits the longest database description at normal and expanded sizes`, async ({ page, request }) => {
+    const part = `PS-${randomUUID().slice(0, 4)}`
+    const description = '304 S.S. FULL COUPLINGS SP-114 - 1000#'
+    await importProduct(request, part, description)
+    await page.goto('/')
+    await page.getByRole('textbox', { name: 'Part Number', exact: true }).fill(part)
+    await page.getByRole('textbox', { name: 'Part Number', exact: true }).press('Enter')
+    await expect(page.getByLabel('Description', { exact: true })).toHaveValue(description)
+    await page.getByRole('radio', { name: mode, exact: true }).check()
+    for (const width of [1536, 390, 1536]) {
+      await page.setViewportSize({ width, height: 1024 })
+      await page.getByRole('button', { name: 'Expand label preview' }).click()
+      for (const label of [page.locator('.product-label').first(), page.getByRole('dialog').locator('.product-label')]) {
+        const value = label.locator('.label-description strong')
+        await expect(value).toHaveText(description)
+        await expect.poll(() => value.evaluate((node) => node.scrollHeight <= node.clientHeight && node.scrollWidth <= node.clientWidth)).toBe(true)
+        const bounds = await value.boundingBox()
+        const next = await label.locator('.label-quantity').boundingBox()
+        expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(next!.y)
+      }
+      await page.keyboard.press('Escape')
+    }
   })
 }
