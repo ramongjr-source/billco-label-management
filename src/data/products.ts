@@ -1,3 +1,4 @@
+import type { PrintLabelType } from '../../shared/printing'
 import type { Product } from '../../shared/product.js'
 
 export type { Product } from '../../shared/product.js'
@@ -9,7 +10,7 @@ export const labelTypes = [
   { id: 'bcc', name: 'BCC', title: 'BCC Labels', subtitle: 'Create 3 × 2 BCC labels with an editable quantity and no barcode.' },
 ] as const
 
-export type LabelType = (typeof labelTypes)[number]['id']
+export type LabelType = PrintLabelType
 
 export interface LabelRules {
   width: 3

@@ -90,6 +90,7 @@ test('preserves long Part Numbers and keeps label text within desktop and mobile
   const description = 'LONG IMPORTED DESCRIPTION WITH DIMENSIONS AND MATERIAL '.repeat(10).slice(0, 512)
   await importProduct(request, part, description)
   await page.goto('/')
+  await expect(page.getByLabel('Description', { exact: true })).toHaveValue('3/8 Brass Coupling')
   await page.getByRole('textbox', { name: 'Part Number', exact: true }).fill(part)
   await page.getByRole('textbox', { name: 'Part Number', exact: true }).press('Enter')
   await expect(page.getByLabel('Description', { exact: true })).toHaveValue(description)

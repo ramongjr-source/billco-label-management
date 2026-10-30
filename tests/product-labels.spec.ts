@@ -235,6 +235,7 @@ test('requires operator quantity after lookup in either editable label type', as
     await quantity.fill('72')
     await page.getByRole('textbox', { name: 'Part Number', exact: true }).fill('5081')
     await page.getByRole('button', { name: 'Search', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'Search', exact: true })).toBeEnabled()
     await expect(page.getByLabel('Description', { exact: true })).toHaveValue('3/8 Brass Elbow')
     await expect(page.getByRole('radio', { name: mode.name, exact: true })).toBeChecked()
     await expect(page.getByRole('heading', { name: mode.heading, exact: true })).toBeVisible()

@@ -74,9 +74,11 @@ remain significant. Updates preserve the stored Part Number spelling. See
 [`docs/excel-import.md`](docs/excel-import.md) for workbook columns, description
 consolidation, identifier rules, and size limits.
 
-Authentication, printing, reporting, customer database management, and SATO
-integration remain outside the implemented scope. Print and navigation for
-those features are disabled. Legacy `.xls` and macro-enabled `.xlsm` imports
+The [Print Engine Foundation](docs/print-foundation.md) records validated jobs,
+provides printer selection and a separate Print Quantity, remembers the last
+printer in this browser, and retains history. PRINT records a job only; physical
+printing, authentication, reporting, customer database management, and SATO
+integration remain outside this phase. Legacy `.xls` and macro-enabled `.xlsm` imports
 are not supported.
 
 ```sh

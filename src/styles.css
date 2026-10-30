@@ -90,9 +90,8 @@ select { padding-right: 10px; }
 .label-type-group legend { margin-bottom: 7px; }
 .choice-row { font-size: 17px; min-height: 31px; line-height: 1.25; cursor: pointer; width: fit-content; }
 input[type="radio"], input[type="checkbox"] { width: 22px; height: 22px; accent-color: #2356d7; flex-shrink: 0; cursor: pointer; }
-.form-actions { grid-template-columns: 1.3fr 1fr 1fr; }
+.form-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .form-actions .button { height: 57px; font-size: 17px; font-weight: 600; gap: 12px; }
-.form-actions .print-button { font-size: 23px; }
 
 .preview-column { padding-top: 12px; }
 .preview-panel { padding: 10px 13px 15px; scroll-margin-top: 20px; }
@@ -209,7 +208,6 @@ input[type="radio"], input[type="checkbox"] { width: 22px; height: 22px; accent-
   .preview-stage { padding: 18px 20px; }
   .search-row { grid-template-columns: minmax(0, 1fr) 110px; }
   .form-actions .button { gap: 7px; font-size: 17px; }
-  .form-actions .print-button { font-size: 21px; }
 }
 
 @media (max-width: 1150px) {
@@ -245,7 +243,6 @@ input[type="radio"], input[type="checkbox"] { width: 22px; height: 22px; accent-
   .form-actions { gap: 8px; }
   .form-actions .button { font-size: 17px; gap: 6px; }
   .form-actions .button svg { width: 20px; }
-  .form-actions .print-button { font-size: 20px; }
   .preview-stage { padding: 15px 14px; }
   .preview-panel { padding: 10px; }
   .preview-heading { gap: 8px; padding: 0 0 9px; }
@@ -266,9 +263,8 @@ input[type="radio"], input[type="checkbox"] { width: 22px; height: 22px; accent-
 
 @media (max-width: 380px) {
   .platform-title { font-size: 18px; }
-  .form-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .form-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .form-actions .button { flex-direction: column; height: 66px; font-size: 14px; gap: 4px; }
-  .form-actions .print-button { font-size: 16px; }
   .preview-heading h2 { font-size: 21px; }
   .preview-size { font-size: 13px; }
 }
@@ -287,3 +283,12 @@ input[type="radio"], input[type="checkbox"] { width: 22px; height: 22px; accent-
 .suggestions-panel strong { color: #173d60; }
 .suggestions-panel span { font-size: 14px; color: #405468; }
 .suggestions-message { padding: 8px 12px; margin: 0; font-size: 14px; }
+
+.print-panel { margin-top: 18px; padding: 20px; }
+.print-panel h2 { font-size: 24px; font-weight: 600; }
+.print-panel > p, .print-panel .field-group p { margin: 8px 0; font-size: 14px; }
+.print-panel .field-group { margin-top: 16px; }
+.print-panel summary { cursor: pointer; font-weight: 600; margin: 16px 0; }
+.print-history { list-style: none; padding: 0; }
+.print-history li { border-top: 1px solid #c7ced7; padding: 12px 0; overflow-wrap: anywhere; }
+.print-history p { font-size: 14px; margin: 4px 0; }

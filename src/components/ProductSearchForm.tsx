@@ -1,5 +1,5 @@
 import { PartNumberInput } from './PartNumberInput'
-import { FileSearch, LockKeyhole, Printer, RotateCcw, Search } from 'lucide-react'
+import { FileSearch, LockKeyhole, RotateCcw, Search } from 'lucide-react'
 import { labelTypes, type LabelType, type Product } from '../data/products'
 
 interface ProductSearchFormProps {
@@ -71,11 +71,9 @@ export function ProductSearchForm(props: ProductSearchFormProps) {
           ))}
         </fieldset>
         <div className="form-actions grid gap-3">
-          <button className="button button-primary print-button" type="button" disabled title="Printing is not available yet." aria-describedby="printing-note"><Printer size={27} aria-hidden="true" /> PRINT</button>
           <button className="button button-secondary" type="button" onClick={props.onPreview} disabled={!props.canPreview}><FileSearch size={25} aria-hidden="true" /> PREVIEW</button>
           <button className="button button-secondary" type="button" onClick={props.onClear}><RotateCcw size={24} aria-hidden="true" /> CLEAR</button>
         </div>
-        <p id="printing-note" className="field-help sr-only max-md:not-sr-only max-md:mt-3 max-md:text-center">Preview only; printing unavailable.</p>
       </form>
     </section>
   )

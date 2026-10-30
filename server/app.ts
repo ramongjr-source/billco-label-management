@@ -3,9 +3,12 @@ import { extname, join, resolve } from 'node:path'
 import type { DatabaseSync } from 'node:sqlite'
 import express from 'express'
 import { findProductByPartNumber, searchProducts } from '../database/index.js'
+import { createPrintRouter } from './printRouter.js'
+import type { PrintService } from '../shared/printing.js'
 import { createProductImportRouter } from './productImportRouter.js'
 
 interface AppOptions {
+  printService?: PrintService
   staticDirectory?: string
   onError?: (error: unknown) => void
 }
@@ -80,6 +83,8 @@ export function createApp(db: DatabaseSync, options: AppOptions = {}) {
       response.status(500).json({ error: 'Unable to load the product. Please try again.' })
     }
   })
+
+  app.use('/api', createPrintRouter(db, reportError, options.printService))
 
   app.use('/api', createProductImportRouter(db, { onError: reportError }))
 

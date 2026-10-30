@@ -26,11 +26,11 @@ function insert(db: DatabaseSync, values: Array<string | number | null> = valid)
 test('initial migration creates strict products and tracks its version once', (t) => {
   const db = openProductDatabase(':memory:')
   t.after(() => db.close())
-  assert.equal(migrateDatabase(db), 3)
+  assert.equal(migrateDatabase(db), 4)
   assert.equal(migrateDatabase(db), 0)
   assert.deepEqual({ ...db.prepare('SELECT version, name FROM schema_migrations ORDER BY version DESC LIMIT 1').get() }, {
-    version: 3,
-    name: '003-case-insensitive-parts.sql',
+    version: 4,
+    name: '004-print-foundation.sql',
   })
   assert.equal(db.prepare("SELECT strict FROM pragma_table_list WHERE name = 'products'").get()?.strict, 1)
   assert.equal(db.prepare('SELECT COUNT(*) AS count FROM products').get()?.count, 0)
@@ -168,7 +168,7 @@ test('file-backed products persist across closing, reopening, migrating, and see
 
 test('migration refuses a schema from an incompatible application version', (t) => {
   const db = database(t)
-  db.prepare('INSERT INTO schema_migrations (version, name) VALUES (?, ?)').run(4, 'future.sql')
+  db.prepare('INSERT INTO schema_migrations (version, name) VALUES (?, ?)').run(5, 'future.sql')
   assert.throws(() => migrateDatabase(db), /incompatible/)
   assert.equal(db.prepare('SELECT COUNT(*) AS count FROM products').get()?.count, 0)
 })
@@ -180,7 +180,7 @@ test('legacy migration preserves product records and never invents a bulk barcod
   db.exec("CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL DEFAULT 'legacy') STRICT")
   db.prepare('INSERT INTO schema_migrations (version, name) VALUES (?, ?)').run(1, '001-create-products.sql')
   db.prepare('INSERT INTO products VALUES (?, ?, ?, ?, ?, ?)').run('000LEGACY', 'Retained description', 150, 15, '000OLD-CODE', 'inactive')
-  assert.equal(migrateDatabase(db), 2)
+  assert.equal(migrateDatabase(db), 3)
   assert.equal(migrateDatabase(db), 0)
   assert.deepEqual(findProductByPartNumber(db, '000LEGACY'), {
     partNumber: '000LEGACY', description: 'Retained description', bulkFixedQuantity: 150,
@@ -208,7 +208,7 @@ test('migration refuses legacy case-only collisions without deleting records', (
   assert.equal(db.prepare('SELECT COUNT(*) AS count FROM products').get()?.count, 2)
   assert.equal(db.prepare('SELECT MAX(version) AS version FROM schema_migrations').get()?.version, 2)
   db.prepare('DELETE FROM products WHERE part_number = ?').run('ab.025x013')
-  assert.equal(migrateDatabase(db), 1)
+  assert.equal(migrateDatabase(db), 2)
   assert.equal(findProductByPartNumber(db, 'aB.025X013')?.partNumber, 'AB.025X013')
 })
 

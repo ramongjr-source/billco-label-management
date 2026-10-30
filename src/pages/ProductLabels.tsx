@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronRight } from 'lucide-react'
+import { PrintControls } from '../components/PrintControls'
 import { Header } from '../components/Header'
 import { Sidebar } from '../components/Sidebar'
 import { ProductSearchForm } from '../components/ProductSearchForm'
@@ -143,6 +144,7 @@ export function ProductLabels({ initialLabelType, onLabelTypeChange, onNavigateI
               onPreview={() => { previewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); previewRef.current?.focus({ preventScroll: true }) }}
               onClear={clear}
             />
+            <PrintControls product={previewProduct} labelType={labelType} quantity={quantity} poNumber={poNumber} lotNumber={lotNumber} />
           </div>
           <div className="preview-column min-w-0">
             <LabelPreviewPanel rules={labelRules} previewRef={previewRef} data={previewProduct ? { product: previewProduct, poNumber, lotNumber, quantity: validQuantity ? quantity : '' } : null} />
