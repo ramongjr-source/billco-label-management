@@ -20,6 +20,7 @@ const mappingFields: Array<{ field: ImportField; label: string }> = [
 interface ProductImportProps {
   labelType: LabelType
   onNavigateProducts: () => void
+  onNavigatePrinters: () => void
   onSelectLabelType: (type: LabelType) => void
 }
 
@@ -54,7 +55,7 @@ function ImportCounts({ report, committed }: { report: ProductImportResult; comm
   </dl>
 }
 
-export function ProductImport({ labelType, onNavigateProducts, onSelectLabelType }: ProductImportProps) {
+export function ProductImport({ labelType, onNavigateProducts, onNavigatePrinters, onSelectLabelType }: ProductImportProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [sheetName, setSheetName] = useState('')
@@ -206,7 +207,7 @@ export function ProductImport({ labelType, onNavigateProducts, onSelectLabelType
     <a href="#main-content" className="skip-link">Skip to import workspace</a>
     <Header menuOpen={menuOpen} onToggleMenu={() => setMenuOpen((open) => !open)} />
     {menuOpen && <button className="nav-backdrop" type="button" aria-label="Close navigation" onClick={() => setMenuOpen(false)} />}
-    <Sidebar open={menuOpen} labelType={labelType} onSelectLabelType={onSelectLabelType} onNavigateImport={() => setMenuOpen(false)} activePage="product-import" navigationDisabled={committing} />
+    <Sidebar open={menuOpen} labelType={labelType} onSelectLabelType={onSelectLabelType} onNavigateImport={() => setMenuOpen(false)} onNavigatePrinters={onNavigatePrinters} activePage="product-import" navigationDisabled={committing} />
     <main id="main-content" className="workspace import-workspace">
       <div className="import-content">
         <nav className="breadcrumb flex items-center gap-3" aria-label="Breadcrumb"><span>Database</span><ChevronRight size={17} aria-hidden="true" /><span aria-current="page">Import Master List</span></nav>

@@ -6,11 +6,12 @@ interface SidebarProps {
   labelType: LabelType
   onSelectLabelType: (type: LabelType) => void
   onNavigateImport: () => void
-  activePage?: 'product-labels' | 'product-import'
+  onNavigatePrinters: () => void
+  activePage?: 'product-labels' | 'product-import' | 'printer-setup'
   navigationDisabled?: boolean
 }
 
-export function Sidebar({ open, labelType, onSelectLabelType, onNavigateImport, activePage = 'product-labels', navigationDisabled = false }: SidebarProps) {
+export function Sidebar({ open, labelType, onSelectLabelType, onNavigateImport, onNavigatePrinters, activePage = 'product-labels', navigationDisabled = false }: SidebarProps) {
   return (
     <aside className={`sidebar ${open ? 'sidebar-open' : ''}`} id="main-navigation">
       <nav aria-label="Main navigation">
@@ -33,8 +34,8 @@ export function Sidebar({ open, labelType, onSelectLabelType, onNavigateImport, 
         </div>
         <div className="nav-section"><button className="nav-heading" type="button" disabled><Clock3 size={27} /> <span>Print History</span></button></div>
         <div className="nav-section">
-          <div className="nav-heading"><Settings size={27} /> <span>Administration</span><ChevronDown size={18} className="ml-auto" /></div>
-          <div className="nav-children"><button className="nav-item" type="button" disabled>Printer Setup</button><button className="nav-item" type="button" disabled>User Management</button><button className="nav-item" type="button" disabled>System Settings</button></div>
+          <div className={`nav-heading${activePage === 'printer-setup' ? ' active-section' : ''}`}><Settings size={27} /> <span>Administration</span><ChevronDown size={18} className="ml-auto" /></div>
+          <div className="nav-children"><button className={activePage === 'printer-setup' ? 'nav-item nav-item-active' : 'nav-item'} type="button" onClick={onNavigatePrinters} disabled={navigationDisabled} aria-current={activePage === 'printer-setup' ? 'page' : undefined}>Printer Setup</button><button className="nav-item" type="button" disabled>User Management</button><button className="nav-item" type="button" disabled>System Settings</button></div>
         </div>
       </nav>
       <p className="sidebar-note">Billco Labeling Platform</p>

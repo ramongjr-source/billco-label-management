@@ -12,9 +12,10 @@ interface ProductLabelsProps {
   initialLabelType: LabelType
   onLabelTypeChange: (type: LabelType) => void
   onNavigateImport: () => void
+  onNavigatePrinters: () => void
 }
 
-export function ProductLabels({ initialLabelType, onLabelTypeChange, onNavigateImport }: ProductLabelsProps) {
+export function ProductLabels({ initialLabelType, onLabelTypeChange, onNavigateImport, onNavigatePrinters }: ProductLabelsProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [partNumber, setPartNumber] = useState('5080')
   const [product, setProduct] = useState<Product | null>(null)
@@ -126,7 +127,7 @@ export function ProductLabels({ initialLabelType, onLabelTypeChange, onNavigateI
       <a href="#main-content" className="skip-link">Skip to label workspace</a>
       <Header menuOpen={menuOpen} onToggleMenu={() => setMenuOpen((open) => !open)} />
       {menuOpen && <button className="nav-backdrop" type="button" aria-label="Close navigation" onClick={() => setMenuOpen(false)} />}
-      <Sidebar open={menuOpen} labelType={labelType} onSelectLabelType={selectLabelType} onNavigateImport={onNavigateImport} />
+      <Sidebar open={menuOpen} labelType={labelType} onSelectLabelType={selectLabelType} onNavigateImport={onNavigateImport} onNavigatePrinters={onNavigatePrinters} />
       <main id="main-content" className="workspace label-workspace">
         <div className="workspace-grid">
           <div className="form-column min-w-0">

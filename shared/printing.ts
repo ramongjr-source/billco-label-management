@@ -8,6 +8,33 @@ export interface Printer {
   model: string
   status: 'active' | 'inactive'
   createdAt: string
+  ipAddress: string
+  description: string
+  supportedMedia: string[]
+  currentMedia: string | null
+  lastMediaChangeAt: string | null
+  lastMediaChangeUser: string | null
+  mediaValidationEnabled: boolean
+}
+export interface MediaChange {
+  id: string
+  requestId: string
+  printerId: string
+  printerName: string
+  previousMedia: string | null
+  newMedia: string | null
+  user: string
+  timestamp: string
+}
+export interface MediaHistoryPage {
+  changes: MediaChange[]
+  nextBefore: number | null
+}
+export interface MediaMismatch {
+  printerId: string
+  printerName: string
+  requestedMedia: string
+  currentMedia: string | null
 }
 export interface PrintRequest {
   requestId: string
@@ -18,13 +45,15 @@ export interface PrintRequest {
   printQuantity: number
   poNumber: string
   lotNumber: string
+  requestedMedia?: string
 }
 export interface PrintJob {
   id: string
   requestId: string
   status: 'recorded'
   createdAt: string
-  printer: Printer
+  /** Pre-005 immutable snapshots contain only the original printer fields. */
+  printer: Pick<Printer, 'id' | 'name' | 'model' | 'status' | 'createdAt'> & Partial<Printer>
   label: {
     templateVersion: 1
     type: PrintLabelType
@@ -37,6 +66,7 @@ export interface PrintJob {
     lotNumber: string
   }
   printQuantity: number
+  requestedMedia?: string
 }
 /** Recording is deliberately separate from future physical delivery. */
 export interface PrintService {

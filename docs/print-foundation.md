@@ -7,14 +7,16 @@ TCP transport, SATO communication, or printer discovery.
 ## Setup and printer records
 
 Startup applies migration `004-print-foundation.sql` to the selected
-`DATABASE_PATH`. Existing product data is retained. Production startup creates no printer records.
+`DATABASE_PATH`. Existing product data is retained. Issue #35 adds migration 005
+and the configurable production registry described in [Printer management](printer-management.md).
 Development setup (`npm run dev` / `npm run db:setup`) inserts four logical
 examples: SATO CL4NX Plus #1, #2, #3, and Generic Printer. Existing names and
 active/inactive settings are never overwritten. These are example records,
 not discovered or connected devices. Printer names identify physical devices;
 they do not assign label types, stock, colors, or media to those devices.
 
-Configure printer records manually through the API. For a local development API:
+Configure printer records in Administration → Printer Setup or through the API.
+For a local development API:
 
 ```sh
 curl -X POST http://localhost:3001/api/printers \
@@ -24,7 +26,9 @@ curl -X POST http://localhost:3001/api/printers \
 
 `POST /api/printers` accepts a name/model (1–80 characters) and creates an active
 printer with a generated ID. `GET /api/printers` lists configured records.
-`PATCH /api/printers/:id` updates name, model, or active/inactive status. Deactivate
+`PATCH /api/printers/:id` updates name, model, active/inactive status, and the
+additional configuration fields from Issue #35. Loaded-media changes use the
+audited media-change endpoint. Deactivate
 printers instead of deleting history. Configuration endpoints inherit the
 application's current internal API access model; role-based administration is
 not introduced in this phase.
