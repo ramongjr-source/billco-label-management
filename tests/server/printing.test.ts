@@ -94,7 +94,7 @@ test('print HTTP endpoints validate requests, configure printers, and expose rec
   const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`
   const post = (path: string, body: unknown) => fetch(url + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
   assert.equal((await post('/api/printers', { name: 'Printer C', model: 'SATO CL4NX Plus' })).status, 201)
-  assert.equal((await (await fetch(url + '/api/printers')).json()).length, 2)
+  assert.equal((await (await fetch(url + '/api/printers')).json()).length, 6)
   assert.equal((await post('/api/print-jobs', request)).status, 201)
   assert.equal((await post('/api/print-jobs', request)).status, 200)
   assert.equal((await post('/api/print-jobs', { ...request, printQuantity: 1 })).status, 409)
@@ -111,7 +111,7 @@ test('development printer examples are idempotent and never assign stock or over
   const example = service.listPrinters().find(printer => printer.id === 'example-sato-1')!
   updatePrinter(db, example.id, { name: 'Changed name', status: 'inactive' })
   seedDevelopmentPrinters(db)
-  assert.equal(service.listPrinters().length, 5)
+  assert.equal(service.listPrinters().length, 9)
   assert.equal(service.listPrinters().find(printer => printer.id === example.id)?.name, 'Changed name')
   assert.equal(service.listPrinters().find(printer => printer.id === example.id)?.status, 'inactive')
 })
