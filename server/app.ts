@@ -6,10 +6,12 @@ import express from 'express'
 import { findProductByPartNumber, searchProducts } from '../database/index.js'
 import { createPrintRouter } from './printRouter.js'
 import type { PrintService } from '../shared/printing.js'
+import type { ConnectionProbe } from './printerConnectionService.js'
 import { createProductImportRouter } from './productImportRouter.js'
 
 interface AppOptions {
   printService?: PrintService
+  connectionProbe?: ConnectionProbe
   staticDirectory?: string
   onError?: (error: unknown) => void
 }
@@ -85,7 +87,7 @@ export function createApp(db: DatabaseSync, options: AppOptions = {}) {
     }
   })
 
-  app.use('/api', createPrintRouter(db, reportError, options.printService))
+  app.use('/api', createPrintRouter(db, reportError, options.printService, options.connectionProbe))
 
   app.use('/api', createProductImportRouter(db, { onError: reportError }))
 

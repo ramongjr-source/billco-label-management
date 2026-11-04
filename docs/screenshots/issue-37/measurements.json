@@ -1,0 +1,112 @@
+{
+  "baseline": "7d9c195",
+  "browserZoom": "100%",
+  "deviceScaleFactor": 1,
+  "realLanPrintersTested": false,
+  "localFixtureAcceptedConnections": 1,
+  "applicationBytesReceived": 0,
+  "measurements": [
+    {
+      "screen": "before-settings-900",
+      "width": 1920,
+      "height": 900,
+      "scrollY": 0,
+      "overflow": 0,
+      "deviceScaleFactor": 1
+    },
+    {
+      "screen": "before-bulk-fixed-900",
+      "width": 1920,
+      "height": 900,
+      "scrollY": 0,
+      "overflow": 0,
+      "deviceScaleFactor": 1
+    },
+    {
+      "screen": "before-package-fixed-900",
+      "width": 1920,
+      "height": 900,
+      "scrollY": 0,
+      "overflow": 0,
+      "deviceScaleFactor": 1
+    },
+    {
+      "screen": "before-bulk-variable-900",
+      "width": 1920,
+      "height": 900,
+      "scrollY": 0,
+      "overflow": 0,
+      "deviceScaleFactor": 1
+    },
+    {
+      "screen": "before-bcc-900",
+      "width": 1920,
+      "height": 900,
+      "scrollY": 0,
+      "overflow": 0,
+      "deviceScaleFactor": 1
+    },
+    {
+      "screen": "after-settings-900",
+      "width": 1920,
+      "height": 900,
+      "scrollY": 0,
+      "overflow": 0,
+      "deviceScaleFactor": 1
+    },
+    {
+      "screen": "after-bulk-fixed-900",
+      "width": 1920,
+      "height": 900,
+      "scrollY": 0,
+      "overflow": 0,
+      "deviceScaleFactor": 1
+    },
+    {
+      "screen": "after-package-fixed-900",
+      "width": 1920,
+      "height": 900,
+      "scrollY": 0,
+      "overflow": 0,
+      "deviceScaleFactor": 1
+    },
+    {
+      "screen": "after-bulk-variable-900",
+      "width": 1920,
+      "height": 900,
+      "scrollY": 0,
+      "overflow": 0,
+      "deviceScaleFactor": 1
+    },
+    {
+      "screen": "after-bcc-900",
+      "width": 1920,
+      "height": 900,
+      "scrollY": 0,
+      "overflow": 0,
+      "deviceScaleFactor": 1
+    },
+    {
+      "screen": "offline-local-fixture-settings-900",
+      "width": 1920,
+      "height": 900,
+      "scrollY": 0,
+      "overflow": 0,
+      "deviceScaleFactor": 1
+    }
+  ],
+  "labelHashes": {
+    "before": {
+      "bulk-fixed": "fcf5e51579c09a92b5773a9b3f7c6d4586b2c74c706fd9453568f486ee97d360",
+      "package-fixed": "26d8df2a7d205256aec7407da86f7e1a9dbb7dcaed4e401a7d3f5113a0a68d90",
+      "bulk-variable": "fea2a2a1c3d8c13199269d6a212c706227f298b8b04989e54ec6ee6918274ac5",
+      "bcc": "fae021bd8506985d9da703bcb84403f36e8e35ee5d40249576707f5faee9f0bd"
+    },
+    "after": {
+      "bulk-fixed": "fcf5e51579c09a92b5773a9b3f7c6d4586b2c74c706fd9453568f486ee97d360",
+      "package-fixed": "26d8df2a7d205256aec7407da86f7e1a9dbb7dcaed4e401a7d3f5113a0a68d90",
+      "bulk-variable": "fea2a2a1c3d8c13199269d6a212c706227f298b8b04989e54ec6ee6918274ac5",
+      "bcc": "fae021bd8506985d9da703bcb84403f36e8e35ee5d40249576707f5faee9f0bd"
+    }
+  }
+}
