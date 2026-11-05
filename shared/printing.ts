@@ -15,6 +15,32 @@ export interface Printer {
   lastMediaChangeAt: string | null
   lastMediaChangeUser: string | null
   mediaValidationEnabled: boolean
+  port: number
+  connectionTimeoutMs: number
+  connectionStatus: 'unknown' | 'online' | 'offline'
+  lastConnectionTestAt: string | null
+  lastSuccessfulConnectionAt: string | null
+}
+export interface PrinterConnectionTest {
+  id: string
+  printerId: string
+  printerName: string
+  ipAddress: string
+  port: number
+  connectionTimeoutMs: number
+  timestamp: string
+  result: 'success' | 'failure'
+  errorMessage: string | null
+}
+export interface PrinterConnectionHistoryPage {
+  connections: PrinterConnectionTest[]
+  nextBefore: number | null
+}
+export interface PrinterConnectionTestResult {
+  printer: Printer
+  connection: PrinterConnectionTest
+  /** False when settings changed or another test started while this attempt ran. */
+  applied: boolean
 }
 export interface MediaChange {
   id: string
@@ -52,7 +78,7 @@ export interface PrintJob {
   requestId: string
   status: 'recorded'
   createdAt: string
-  /** Pre-005 immutable snapshots contain only the original printer fields. */
+  /** Immutable snapshots from earlier versions may omit newer printer fields. */
   printer: Pick<Printer, 'id' | 'name' | 'model' | 'status' | 'createdAt'> & Partial<Printer>
   label: {
     templateVersion: 1

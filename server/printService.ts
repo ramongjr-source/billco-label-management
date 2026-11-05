@@ -22,15 +22,21 @@ function quantity(value: unknown, name: string): number {
   if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 1 || value > 999999) throw new PrintValidationError(`${name} must be a whole number from 1 to 999999.`)
   return value
 }
+function connectionInteger(value: unknown, name: string, min: number, max: number): number {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < min || value > max) throw new PrintValidationError(`${name} must be a whole number from ${min} to ${max}.`)
+  return value
+}
 const printerColumns = `id, name, model, status, created_at AS createdAt,
   ip_address AS ipAddress, description, supported_media_json AS supportedMediaJson,
   current_media AS currentMedia, last_media_change_at AS lastMediaChangeAt,
-  last_media_change_user AS lastMediaChangeUser, media_validation_enabled AS mediaValidationEnabled`
+  last_media_change_user AS lastMediaChangeUser, media_validation_enabled AS mediaValidationEnabled,
+  port, connection_timeout_ms AS connectionTimeoutMs, connection_status AS connectionStatus,
+  last_connection_test_at AS lastConnectionTestAt, last_successful_connection_at AS lastSuccessfulConnectionAt`
 function printerFromRow(row: Record<string, unknown>): Printer {
   const { supportedMediaJson, ...printer } = row
   return { ...printer, supportedMedia: JSON.parse(String(supportedMediaJson)), mediaValidationEnabled: Boolean(row.mediaValidationEnabled) } as unknown as Printer
 }
-function findPrinter(db: DatabaseSync, id: string): Printer {
+export function findPrinter(db: DatabaseSync, id: string): Printer {
   const row = db.prepare(`SELECT ${printerColumns} FROM printers WHERE id = ?`).get(id)
   if (!row) throw new PrintValidationError('Printer not found.', 404)
   return printerFromRow(row)
@@ -43,10 +49,13 @@ function mediaList(value: unknown): string[] {
 }
 function printerConfiguration(data: Record<string, unknown>, current?: Printer) {
   if (data.currentMedia !== undefined || data.lastMediaChangeAt !== undefined || data.lastMediaChangeUser !== undefined) throw new PrintValidationError('Use the media change action with an operator name to update loaded media.')
+  if (['connectionStatus', 'lastConnectionTestAt', 'lastSuccessfulConnectionAt', 'connectionGeneration'].some(key => data[key] !== undefined)) throw new PrintValidationError('Connection status and timestamps are updated by Test Connection only.')
   const status = data.status === undefined ? current?.status ?? 'active' : data.status
   if (status !== 'active' && status !== 'inactive') throw new PrintValidationError('Choose an active or inactive printer status.')
   const ipAddress = data.ipAddress === undefined ? current?.ipAddress ?? '' : text(data.ipAddress, 'IP address', 45, false)
   if (ipAddress && !isIP(ipAddress)) throw new PrintValidationError('Enter a valid IPv4 or IPv6 address, or leave it blank.')
+  const port = data.port === undefined ? current?.port ?? 9100 : connectionInteger(data.port, 'Port', 1, 65535)
+  const connectionTimeoutMs = data.connectionTimeoutMs === undefined ? current?.connectionTimeoutMs ?? 3000 : connectionInteger(data.connectionTimeoutMs, 'Connection timeout (ms)', 100, 30000)
   const supportedMedia = data.supportedMedia === undefined ? current?.supportedMedia ?? [] : mediaList(data.supportedMedia)
   const mediaValidationEnabled = data.mediaValidationEnabled === undefined ? current?.mediaValidationEnabled ?? false : data.mediaValidationEnabled
   if (typeof mediaValidationEnabled !== 'boolean') throw new PrintValidationError('Choose whether media confirmation is required.')
@@ -54,16 +63,16 @@ function printerConfiguration(data: Record<string, unknown>, current?: Printer) 
   return {
     name: data.name === undefined && current ? current.name : text(data.name, 'printer name', 80),
     model: data.model === undefined && current ? current.model : text(data.model, 'printer model', 80),
-    status, ipAddress,
+    status, ipAddress, port, connectionTimeoutMs,
     description: data.description === undefined ? current?.description ?? '' : text(data.description, 'printer description', 512, false),
     supportedMedia, mediaValidationEnabled,
-  } as Pick<Printer, 'name' | 'model' | 'status' | 'ipAddress' | 'description' | 'supportedMedia' | 'mediaValidationEnabled'>
+  } as Pick<Printer, 'name' | 'model' | 'status' | 'ipAddress' | 'port' | 'connectionTimeoutMs' | 'description' | 'supportedMedia' | 'mediaValidationEnabled'>
 }
 export function createPrinter(db: DatabaseSync, input: unknown): Printer {
   const config = printerConfiguration(object(input))
-  const printer: Printer = { id: randomUUID(), ...config, createdAt: new Date().toISOString(), currentMedia: null, lastMediaChangeAt: null, lastMediaChangeUser: null }
-  db.prepare(`INSERT INTO printers (id, name, model, status, created_at, ip_address, description, supported_media_json, media_validation_enabled)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(printer.id, printer.name, printer.model, printer.status, printer.createdAt, printer.ipAddress, printer.description, JSON.stringify(printer.supportedMedia), Number(printer.mediaValidationEnabled))
+  const printer: Printer = { id: randomUUID(), ...config, createdAt: new Date().toISOString(), currentMedia: null, lastMediaChangeAt: null, lastMediaChangeUser: null, connectionStatus: 'unknown', lastConnectionTestAt: null, lastSuccessfulConnectionAt: null }
+  db.prepare(`INSERT INTO printers (id, name, model, status, created_at, ip_address, description, supported_media_json, media_validation_enabled, port, connection_timeout_ms)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(printer.id, printer.name, printer.model, printer.status, printer.createdAt, printer.ipAddress, printer.description, JSON.stringify(printer.supportedMedia), Number(printer.mediaValidationEnabled), printer.port, printer.connectionTimeoutMs)
   return printer
 }
 export function updatePrinter(db: DatabaseSync, id: string, input: unknown): Printer {
@@ -72,8 +81,15 @@ export function updatePrinter(db: DatabaseSync, id: string, input: unknown): Pri
   try {
     const current = findPrinter(db, id)
     const printer: Printer = { ...current, ...printerConfiguration(data, current) }
-    db.prepare(`UPDATE printers SET name = ?, model = ?, status = ?, ip_address = ?, description = ?, supported_media_json = ?, media_validation_enabled = ? WHERE id = ?`)
-      .run(printer.name, printer.model, printer.status, printer.ipAddress, printer.description, JSON.stringify(printer.supportedMedia), Number(printer.mediaValidationEnabled), id)
+    const connectionChanged = current.ipAddress !== printer.ipAddress || current.port !== printer.port || current.connectionTimeoutMs !== printer.connectionTimeoutMs
+    if (connectionChanged) {
+      printer.connectionStatus = 'unknown'
+      printer.lastConnectionTestAt = null
+      printer.lastSuccessfulConnectionAt = null
+    }
+    db.prepare(`UPDATE printers SET name = ?, model = ?, status = ?, ip_address = ?, description = ?, supported_media_json = ?, media_validation_enabled = ?,
+      port = ?, connection_timeout_ms = ?, connection_status = ?, last_connection_test_at = ?, last_successful_connection_at = ?, connection_generation = connection_generation + ? WHERE id = ?`)
+      .run(printer.name, printer.model, printer.status, printer.ipAddress, printer.description, JSON.stringify(printer.supportedMedia), Number(printer.mediaValidationEnabled), printer.port, printer.connectionTimeoutMs, printer.connectionStatus, printer.lastConnectionTestAt, printer.lastSuccessfulConnectionAt, Number(connectionChanged), id)
     db.exec('COMMIT')
     return printer
   } catch (error) { db.exec('ROLLBACK'); throw error }

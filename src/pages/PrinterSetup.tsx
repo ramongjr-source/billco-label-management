@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { ChevronRight, Plus, Printer as PrinterIcon, RefreshCw } from 'lucide-react'
 import { Header } from '../components/Header'
 import { Sidebar } from '../components/Sidebar'
+import { PrinterConnectionPanel, connectionStatusLabel } from '../components/PrinterConnectionPanel'
 import type { LabelType } from '../data/products'
 import type { MediaChange, Printer } from '../../shared/printing'
 import { changePrinterMedia, createPrinter, listMediaHistory, listPrinters, newRequestId, readOperatorName, rememberOperatorName, updatePrinter, type PrinterConfiguration } from '../data/printing'
@@ -13,7 +14,7 @@ interface PrinterSetupProps {
 }
 
 const emptyConfiguration: PrinterConfiguration = {
-  name: '', model: 'SATO CL4NX Plus', ipAddress: '', description: '', status: 'active', supportedMedia: [], mediaValidationEnabled: false,
+  name: '', model: 'SATO CL4NX Plus', ipAddress: '', port: 9100, connectionTimeoutMs: 3000, description: '', status: 'active', supportedMedia: [], mediaValidationEnabled: false,
 }
 const messageFor = (error: unknown) => error instanceof Error ? error.message : 'Unable to save printer settings. Please try again.'
 
@@ -38,12 +39,12 @@ export function PrinterSetup({ labelType, onNavigateImport, onSelectLabelType }:
   const historyRequest = useRef(0)
   const mediaAttempt = useRef<{ key: string; requestId: string } | null>(null)
   const selected = printers.find(printer => printer.id === selectedId)
-  const pageSize = 8
+  const pageSize = 4
   const pages = Math.max(1, Math.ceil(printers.length / pageSize))
 
   function select(printer: Printer | null) {
     setSelectedId(printer?.id ?? null)
-    setConfiguration(printer ? { name: printer.name, model: printer.model, ipAddress: printer.ipAddress, description: printer.description, status: printer.status, supportedMedia: printer.supportedMedia, mediaValidationEnabled: printer.mediaValidationEnabled } : { ...emptyConfiguration })
+    setConfiguration(printer ? { name: printer.name, model: printer.model, ipAddress: printer.ipAddress, port: printer.port, connectionTimeoutMs: printer.connectionTimeoutMs, description: printer.description, status: printer.status, supportedMedia: printer.supportedMedia, mediaValidationEnabled: printer.mediaValidationEnabled } : { ...emptyConfiguration })
     setSupportedMediaText(printer?.supportedMedia.join(', ') ?? '')
     setCurrentMedia(printer?.currentMedia ?? '')
     setError('')
@@ -150,15 +151,17 @@ export function PrinterSetup({ labelType, onNavigateImport, onSelectLabelType }:
             {loading ? <p role="status">Loading printers…</p> : <div className="import-table-scroll">
               <table className="import-table printer-table">
                 <caption className="sr-only">Configured printers and loaded media</caption>
-                <thead><tr><th scope="col">Printer / IP address</th><th scope="col">Loaded media</th><th scope="col">Enabled</th></tr></thead>
+                <thead><tr><th scope="col">Printer / IP address</th><th scope="col">Loaded media</th><th scope="col">Enabled</th><th scope="col">Connection</th></tr></thead>
                 <tbody>{printers.slice((page - 1) * pageSize, page * pageSize).map(printer => <tr key={printer.id} className={selectedId === printer.id ? 'printer-row-selected' : undefined}>
                   <td><button className="printer-name-button" type="button" onClick={() => select(printer)} disabled={busy} aria-pressed={selectedId === printer.id}>{printer.name}</button><span className="printer-table-detail">{printer.ipAddress || 'No IP configured'}</span></td>
                   <td>{printer.currentMedia ?? 'Unknown'}</td><td>{printer.status === 'active' ? 'Yes' : 'No'}</td>
+                  <td><span className={`printer-connection-status printer-connection-${printer.connectionStatus}`}>{connectionStatusLabel(printer.connectionStatus)}</span></td>
                 </tr>)}</tbody>
               </table>
               {printers.length === 0 && <p className="printer-guidance">No printers configured. Add a printer to get started.</p>}
             </div>}
             {pages > 1 && <nav className="import-pagination" aria-label="Printer registry pagination"><span>{printers.length} printers · Page {page} of {pages}</span><div className="flex gap-2"><button className="button button-secondary" type="button" disabled={page <= 1 || busy} onClick={() => setPage(previous => previous - 1)}>Previous</button><button className="button button-secondary" type="button" disabled={page >= pages || busy} onClick={() => setPage(previous => previous + 1)}>Next</button></div></nav>}
+            {selected && <PrinterConnectionPanel key={selected.id} printer={selected} busy={busy || loading} settingsChanged={configuration.ipAddress.trim() !== selected.ipAddress || configuration.port !== selected.port || configuration.connectionTimeoutMs !== selected.connectionTimeoutMs} onBusyChange={setBusy} onPrinterUpdated={printer => setPrinters(items => items.map(item => item.id === printer.id ? printer : item))} />}
           </section>
           <section className="panel printer-editor" aria-labelledby="printer-editor-heading">
             <h2 id="printer-editor-heading" className="panel-heading">{selected ? 'Edit printer' : 'Add printer'}</h2>
@@ -170,11 +173,15 @@ export function PrinterSetup({ labelType, onNavigateImport, onSelectLabelType }:
                   <div className="field-group"><label htmlFor="printer-name">Printer Name</label><input id="printer-name" required maxLength={80} value={configuration.name} onChange={event => setConfiguration(previous => ({ ...previous, name: event.target.value }))} /></div>
                   <div className="field-group"><label htmlFor="printer-model">Model</label><input id="printer-model" required maxLength={80} value={configuration.model} onChange={event => setConfiguration(previous => ({ ...previous, model: event.target.value }))} /></div>
                 </div>
-                <div className="printer-form-row">
+                <div className="printer-form-row printer-connection-fields">
                   <div className="field-group"><label htmlFor="printer-ip">IP Address</label><input id="printer-ip" maxLength={45} placeholder="192.168.1.190" value={configuration.ipAddress} onChange={event => setConfiguration(previous => ({ ...previous, ipAddress: event.target.value }))} /></div>
-                  <div className="field-group"><label htmlFor="printer-description">Description</label><input id="printer-description" maxLength={512} value={configuration.description} onChange={event => setConfiguration(previous => ({ ...previous, description: event.target.value }))} /></div>
+                  <div className="field-group"><label htmlFor="printer-port">Port</label><input id="printer-port" type="number" min="1" max="65535" step="1" required value={configuration.port || ''} onChange={event => setConfiguration(previous => ({ ...previous, port: Number(event.target.value) }))} /></div>
+                  <div className="field-group"><label htmlFor="printer-connection-timeout">Connection Timeout (ms)</label><input id="printer-connection-timeout" type="number" min="100" max="30000" step="1" required value={configuration.connectionTimeoutMs || ''} onChange={event => setConfiguration(previous => ({ ...previous, connectionTimeoutMs: Number(event.target.value) }))} /></div>
                 </div>
-                <div className="field-group"><label htmlFor="printer-supported-media">Supported Media</label><input id="printer-supported-media" value={supportedMediaText} onChange={event => setSupportedMediaText(event.target.value)} placeholder="Aluminum, Stainless, Brass" aria-describedby="printer-media-help" /><p id="printer-media-help" className="field-help">Separate media names with commas. This list does not assign label types.</p></div>
+                <div className="printer-form-row">
+                  <div className="field-group"><label htmlFor="printer-description">Description</label><input id="printer-description" maxLength={512} value={configuration.description} onChange={event => setConfiguration(previous => ({ ...previous, description: event.target.value }))} /></div>
+                  <div className="field-group"><label htmlFor="printer-supported-media">Supported Media</label><input id="printer-supported-media" value={supportedMediaText} onChange={event => setSupportedMediaText(event.target.value)} placeholder="Aluminum, Stainless, Brass" aria-describedby="printer-media-help" /><p id="printer-media-help" className="field-help">Separate media names with commas.</p></div>
+                </div>
                 <div className="printer-checkboxes">
                   <label className="flex items-center gap-2"><input type="checkbox" checked={configuration.status === 'active'} onChange={event => setConfiguration(previous => ({ ...previous, status: event.target.checked ? 'active' : 'inactive' }))} />Enabled</label>
                   <label className="flex items-center gap-2"><input type="checkbox" checked={configuration.mediaValidationEnabled} onChange={event => setConfiguration(previous => ({ ...previous, mediaValidationEnabled: event.target.checked }))} />Require media confirmation</label>

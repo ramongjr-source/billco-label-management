@@ -81,6 +81,11 @@ printing, authentication, reporting, customer database management, and SATO
 integration remain outside this phase. Legacy `.xls` and macro-enabled `.xlsm` imports
 are not supported.
 
+Administration → Printer Setup supports [printer/media management](docs/printer-management.md)
+and [manual connection tests](docs/printer-connectivity.md). Connection tests use
+saved IP/port/timeout settings, log history, and send no print data. Online/Offline
+reflects the last manual test; no automatic device polling is performed.
+
 ```sh
 npm run db:setup     # Explicitly migrate and seed the selected local database
 npm run build        # TypeScript checks, API/UI build, and migration assets

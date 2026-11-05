@@ -172,7 +172,7 @@ test('migration from foundation preserves configured devices, job snapshots, and
   const requestJson = JSON.stringify({ printerId: printer.id, type: request.labelType, product, labelQuantity: 500, printQuantity: 25, lotNumber: request.lotNumber, poNumber: request.poNumber })
   db.prepare('INSERT INTO print_jobs (id,request_id,request_json,printer_id,status,print_quantity,snapshot_json,created_at) VALUES (?,?,?,?,?,?,?,?)').run(job.id, request.requestId, requestJson, printer.id, 'recorded', 25, JSON.stringify(job), job.createdAt)
   db.prepare('INSERT INTO print_job_events (job_id,event,created_at) VALUES (?,?,?)').run(job.id, 'recorded', job.createdAt)
-  assert.equal(migrateDatabase(db), 1)
+  assert.equal(migrateDatabase(db), 2)
   const service = new RecordingPrintService(db)
   assert.equal(service.listPrinters().length, 5)
   assert.deepEqual(service.listJobs().jobs, [job])

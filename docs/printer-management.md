@@ -3,6 +3,11 @@
 Issue #35 extends the Print Engine Foundation from #28 / PR #30. PRINT still
 records a job only; no printer communication or delivery has been added.
 
+Issue #37 subsequently adds explicit connect-only diagnostics in the same
+Printer Setup page. See [Printer connectivity](printer-connectivity.md) for
+connection settings, manual status, and history. Job recording still sends no
+print data.
+
 ## Repository integration
 
 The registry extends the existing `Printer` contract and SQLite `printers` table.
