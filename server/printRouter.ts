@@ -1,3 +1,4 @@
+import { SatoCommandService } from './satoCommandService.js'
 import express from 'express'
 import type { DatabaseSync } from 'node:sqlite'
 import type { PrintService } from '../shared/printing.js'
@@ -6,8 +7,19 @@ import { PrinterConnectionService, type ConnectionProbe } from './printerConnect
 
 export function createPrintRouter(db: DatabaseSync, reportError: (error: unknown) => void, service: PrintService = new RecordingPrintService(db), connectionProbe?: ConnectionProbe) {
   const router = express.Router()
+  const commands = new SatoCommandService(db)
   const connections = new PrinterConnectionService(db, connectionProbe)
   router.use(express.json({ limit: '16kb' }))
+  router.post('/sato-commands', (req, res, next) => {
+    try { const result = commands.generate(req.body); res.status(result.created ? 201 : 200).json(result.command) } catch (error) { next(error) }
+  })
+  router.get('/sato-commands', (req, res, next) => {
+    try {
+      const cursor = req.query.before
+      if (cursor !== undefined && (typeof cursor !== 'string' || !/^\d+$/.test(cursor))) throw new PrintValidationError('Enter a valid history cursor.')
+      res.json(commands.listHistory(cursor === undefined ? undefined : Number(cursor)))
+    } catch (error) { next(error) }
+  })
   router.get('/printers', (_req, res, next) => { try { res.json(service.listPrinters()) } catch (error) { next(error) } })
   router.post('/printers', (req, res, next) => { try { res.status(201).json(createPrinter(db, req.body)) } catch (error) { next(error) } })
   router.patch('/printers/:id', (req, res, next) => { try { res.json(updatePrinter(db, req.params.id, req.body)) } catch (error) { next(error) } })

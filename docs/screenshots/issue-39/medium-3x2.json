@@ -1,0 +1,154 @@
+{
+  "templateVersion": 1,
+  "model": "SATO CL4NX Plus",
+  "dpi": 203,
+  "widthDots": 609,
+  "heightDots": 406,
+  "label": {
+    "templateVersion": 1,
+    "type": "package-fixed",
+    "width": 3,
+    "height": 2,
+    "product": {
+      "partNumber": "S39-59b0c9ad-1",
+      "description": "1-1/4\" Rigid Conduit Body with cover and 3/4\" threaded openings",
+      "bulkFixedQuantity": 500,
+      "packageFixedQuantity": 25,
+      "productBarcode": "00001234",
+      "bulkBarcode": "BULK-1234",
+      "status": "active"
+    },
+    "quantity": 25,
+    "barcode": "00001234",
+    "poNumber": "",
+    "lotNumber": "241007"
+  },
+  "printQuantity": 1,
+  "elements": [
+    {
+      "field": "brand",
+      "kind": "text",
+      "value": "BILLCO CORPORATION",
+      "x": 24,
+      "y": 20,
+      "width": 306,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "partHeading",
+      "kind": "text",
+      "value": "PART #",
+      "x": 24,
+      "y": 54,
+      "width": 102,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "partNumber",
+      "kind": "text",
+      "value": "S39-59b0c9ad-1",
+      "x": 24,
+      "y": 78,
+      "width": 336,
+      "height": 24,
+      "font": "XM",
+      "scale": 1
+    },
+    {
+      "field": "descriptionHeading",
+      "kind": "text",
+      "value": "DESCRIPTION",
+      "x": 24,
+      "y": 140,
+      "width": 187,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "description",
+      "kind": "text",
+      "value": "1-1/4\" Rigid Conduit Body with co",
+      "x": 24,
+      "y": 162,
+      "width": 561,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "description",
+      "kind": "text",
+      "value": "ver and 3/4\" threaded openings",
+      "x": 24,
+      "y": 184,
+      "width": 510,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "quantity",
+      "kind": "text",
+      "value": "QTY 25",
+      "x": 24,
+      "y": 234,
+      "width": 102,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "lotHeading",
+      "kind": "text",
+      "value": "LOT #",
+      "x": 24,
+      "y": 266,
+      "width": 85,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "lotNumber",
+      "kind": "text",
+      "value": "241007",
+      "x": 24,
+      "y": 285,
+      "width": 102,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "barcode",
+      "kind": "barcode",
+      "value": "00001234",
+      "x": 181,
+      "y": 316,
+      "width": 246,
+      "height": 38
+    },
+    {
+      "field": "barcodeText",
+      "kind": "text",
+      "value": "00001234",
+      "x": 236,
+      "y": 368,
+      "width": 136,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    }
+  ],
+  "issues": [],
+  "valid": true,
+  "payload": "\u001bA\u001bA1V0406H0609\u001b%0\u001bH0024\u001bV0020\u001bL0101\u001bXSBILLCO CORPORATION\u001bH0024\u001bV0054\u001bL0101\u001bXSPART #\u001bH0024\u001bV0078\u001bL0101\u001bXMS39-59b0c9ad-1\u001bH0024\u001bV0140\u001bL0101\u001bXSDESCRIPTION\u001bH0024\u001bV0162\u001bL0101\u001bXS1-1/4\" Rigid Conduit Body with co\u001bH0024\u001bV0184\u001bL0101\u001bXSver and 3/4\" threaded openings\u001bH0024\u001bV0234\u001bL0101\u001bXSQTY 25\u001bH0024\u001bV0266\u001bL0101\u001bXSLOT #\u001bH0024\u001bV0285\u001bL0101\u001bXS241007\u001bH0181\u001bV0316\u001bBG02038>H00001234\u001bH0236\u001bV0368\u001bL0101\u001bXS00001234\u001bQ000001\u001bZ",
+  "id": "8bbc53dd-a863-4940-be22-35a4f3c72543",
+  "requestId": "d7119076aeed0b4e3e8771cced2cbbbb",
+  "createdAt": "2026-11-05T20:22:06.649Z"
+}

@@ -13,6 +13,7 @@ const migrations = [
   { version: 4, filename: '004-print-foundation.sql' },
   { version: 5, filename: '005-printer-media.sql' },
   { version: 6, filename: '006-printer-connectivity.sql' },
+  { version: 7, filename: '007-sato-commands.sql' },
 ] as const
 
 export function openProductDatabase(filename: string): DatabaseSync {

@@ -5,7 +5,7 @@ export class PrintRequestError extends Error {
 }
 export type PrinterConfiguration = Pick<Printer, 'name' | 'model' | 'status' | 'ipAddress' | 'port' | 'connectionTimeoutMs' | 'description' | 'supportedMedia' | 'mediaValidationEnabled'>
 
-async function responseJson<T>(response: Response): Promise<T> {
+export async function responseJson<T>(response: Response): Promise<T> {
   const data = await response.json()
   if (!response.ok) throw new PrintRequestError(data.error || 'Print service unavailable. Please try again.', data.code, data.details)
   return data as T

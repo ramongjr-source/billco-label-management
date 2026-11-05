@@ -1,3 +1,4 @@
+import { SatoCommandPanel } from './SatoCommandPanel'
 import { useEffect, useRef, useState } from 'react'
 import type { Product } from '../../shared/product'
 import type { Printer, PrintJob, PrintRequest } from '../../shared/printing'
@@ -134,6 +135,7 @@ export function PrintControls({ product, labelType, quantity, poNumber, lotNumbe
     </div>
     {message && <p role="status">{message}</p>}
     <div className="print-secondary">
+    <SatoCommandPanel request={product && product.status === 'active' && integer(quantity) && integer(printQuantity) && lotNumber.trim() && (!bulk || poNumber.trim()) ? { product, labelType, labelQuantity: Number(quantity), printQuantity: Number(printQuantity), poNumber: bulk ? poNumber : '', lotNumber } : null} />
     <details className="print-help"><summary>Print help</summary><p id="print-quantity-help">Number of labels to produce; separate from the quantity shown on each label.</p></details>
     <details><summary>Print history</summary>
       <button className="button button-secondary" type="button" disabled={historyLoading || submitting} onClick={() => { void history() }}>Refresh history</button>

@@ -77,9 +77,14 @@ consolidation, identifier rules, and size limits.
 The [Print Engine Foundation](docs/print-foundation.md) records validated jobs,
 provides printer selection and a separate Print Quantity, remembers the last
 printer in this browser, and retains history. PRINT records a job only; physical
-printing, authentication, reporting, customer database management, and SATO
-integration remain outside this phase. Legacy `.xls` and macro-enabled `.xlsm` imports
+printing, authentication, reporting, and customer database management remain
+outside this phase. Legacy `.xls` and macro-enabled `.xlsm` imports
 are not supported.
+
+The Print job panel also provides [SATO command preview and layout validation](docs/sato-command-generation.md)
+for CL4NX Plus / 203 DPI / 3×2 and 3×5 stock. Generation preserves stored
+product descriptions, validates Code 128 values and field bounds, and retains
+command history. It never transmits a payload or creates a print job.
 
 Administration → Printer Setup supports [printer/media management](docs/printer-management.md)
 and [manual connection tests](docs/printer-connectivity.md). Connection tests use
