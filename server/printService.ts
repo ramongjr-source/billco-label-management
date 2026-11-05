@@ -133,6 +133,20 @@ export function listPrinterMediaHistory(db: DatabaseSync, id: string, before?: n
   return { changes: rows.slice(0, 25).map(row => (JSON.parse(String(row.result_json)) as { change: MediaChange }).change), nextBefore: rows.length > 25 ? Number(rows[24].sequence) : null }
 }
 
+/** Shared source-of-truth checks for recording and command preview. No persistence or device access. */
+export function resolveLabelProduct(db: DatabaseSync, expected: Record<string, unknown>, type: PrintLabelType, labelQuantity: number) {
+  if (!isValidPartNumber(expected.partNumber)) throw new PrintValidationError('Enter a valid part number.')
+  const partNumber = expected.partNumber.trim()
+  const bulk = type === 'bulk-fixed' || type === 'bulk-variable'
+  const fixed = type === 'bulk-fixed' || type === 'package-fixed'
+  const product = findProductByPartNumber(db, partNumber)
+  if (!product || product.status !== 'active') throw new PrintValidationError('Choose an active product.')
+  if (Object.entries(product).some(([key, value]) => expected[key] !== value)) throw new PrintValidationError('Product information changed. Search again and review the label.', 409)
+  const barcode = fixed ? (bulk ? product.bulkBarcode : product.productBarcode) : null
+  if (fixed && ((bulk ? product.bulkFixedQuantity : product.packageFixedQuantity) !== labelQuantity || !barcode?.trim())) throw new PrintValidationError('This product is missing fixed quantity/barcode data, or its quantity does not match the master.')
+  return { product, barcode }
+}
+
 export class RecordingPrintService implements PrintService {
   constructor(private db: DatabaseSync) {}
   listPrinters(): Printer[] {
@@ -150,14 +164,12 @@ export class RecordingPrintService implements PrintService {
     if (!printLabelTypes.includes(data.labelType as PrintLabelType)) throw new PrintValidationError('Choose a supported label type.')
     const type = data.labelType as PrintLabelType
     const bulk = type === 'bulk-fixed' || type === 'bulk-variable'
-    const fixed = type === 'bulk-fixed' || type === 'package-fixed'
     const labelQuantity = quantity(data.labelQuantity, 'Quantity on label')
     const printQuantity = quantity(data.printQuantity, 'Print quantity')
     const lotNumber = text(data.lotNumber, 'lot number', 32)
     const poNumber = text(data.poNumber, 'PO number', 32, bulk)
     const expected = object(data.product)
     if (!isValidPartNumber(expected.partNumber)) throw new PrintValidationError('Enter a valid part number.')
-    const partNumber = expected.partNumber.trim()
     const requestedMedia = data.requestedMedia === undefined ? undefined : text(data.requestedMedia, 'requested material', 80)
     // Canonical field order makes retry comparison independent of JSON key order.
     const expectedProduct = Object.fromEntries(['partNumber', 'description', 'bulkFixedQuantity', 'packageFixedQuantity', 'productBarcode', 'bulkBarcode', 'status'].map(key => [key, expected[key]]))
@@ -172,11 +184,7 @@ export class RecordingPrintService implements PrintService {
       }
       const printer = this.listPrinters().find(printer => printer.id === printerId)
       if (!printer || printer.status !== 'active') throw new PrintValidationError('Choose an available printer.')
-      const product = findProductByPartNumber(this.db, partNumber)
-      if (!product || product.status !== 'active') throw new PrintValidationError('Choose an active product.')
-      if (Object.entries(product).some(([key, value]) => expected[key] !== value)) throw new PrintValidationError('Product information changed. Search again and review the label.', 409)
-      const barcode = fixed ? (bulk ? product.bulkBarcode : product.productBarcode) : null
-      if (fixed && ((bulk ? product.bulkFixedQuantity : product.packageFixedQuantity) !== labelQuantity || !barcode?.trim())) throw new PrintValidationError('This product is missing fixed quantity/barcode data, or its quantity does not match the master.')
+      const { product, barcode } = resolveLabelProduct(this.db, expected, type, labelQuantity)
       if (printer.mediaValidationEnabled) {
         if (!requestedMedia || !printer.supportedMedia.includes(requestedMedia)) throw new PrintValidationError('Choose a requested material from this printer’s configured supported media.')
         if (printer.currentMedia !== requestedMedia) throw new PrintValidationError('Please load the requested label stock before continuing.', 409, 'MEDIA_MISMATCH', { printerId, printerName: printer.name, requestedMedia, currentMedia: printer.currentMedia })

@@ -212,7 +212,7 @@ test('migration from printer management preserves configured devices, media audi
   const requestJson = JSON.stringify({ printerId: printer.id, type: request.labelType, product, labelQuantity: 500, printQuantity: 25, lotNumber: request.lotNumber, poNumber: request.poNumber })
   db.prepare('INSERT INTO print_jobs (id,request_id,request_json,printer_id,status,print_quantity,snapshot_json,created_at) VALUES (?,?,?,?,?,?,?,?)').run(job.id, request.requestId, requestJson, printer.id, 'recorded', 25, JSON.stringify(job), job.createdAt)
   db.prepare('INSERT INTO print_job_events (job_id,event,created_at) VALUES (?,?,?)').run(job.id, 'recorded', job.createdAt)
-  assert.equal(migrateDatabase(db), 1); assert.equal(migrateDatabase(db), 0)
+  assert.equal(migrateDatabase(db), 2); assert.equal(migrateDatabase(db), 0)
   const stored = findPrinter(db, printer.id)
   assert.equal(stored.name, printer.name); assert.equal(stored.ipAddress, printer.ipAddress); assert.equal(stored.currentMedia, printer.currentMedia)
   assert.equal(stored.lastMediaChangeUser, change.user); assert.equal(stored.connectionStatus, 'unknown'); assert.equal(stored.port, 9100)

@@ -1,0 +1,308 @@
+{
+  "templateVersion": 1,
+  "model": "SATO CL4NX Plus",
+  "dpi": 203,
+  "widthDots": 609,
+  "heightDots": 1015,
+  "label": {
+    "templateVersion": 1,
+    "type": "bulk-fixed",
+    "width": 3,
+    "height": 5,
+    "product": {
+      "partNumber": "S39-59b0c9ad-2",
+      "description": "4\" x 4\" x 1/4\" Angle 4\" x 4\" x 1/4\" Angle 4\" x 4\" x 1/4\" Angle 4\" x 4\" x 1/4\" Angle 4\" x 4\" x 1/4\" Angle 4\" x 4\" x 1/4\" Angle 4\" x 4\" x 1/4\" Angle 4\" x 4\" x 1/4\" Angle 4\" x 4\" x 1/4\" Angle 4\" x 4\" x 1/4\" Angle 4\" x 4\" x 1/4\" Angle 4\" x 4\" x 1/4\" Angle 4\" x 4\" x 1/4\" Angle 4\" x 4\" x 1/4\" Angle 4\" x 4\" x 1/4\" Angle 4\" x 4\" x 1/4\" Angle 4\" x 4\" x 1/4\" Angle 4\" x 4\" x 1/4\" Angle 4\" x 4\" x 1/4\" Angle 4\" x 4\" x 1/4\" Angle",
+      "bulkFixedQuantity": 500,
+      "packageFixedQuantity": 25,
+      "productBarcode": "00001234",
+      "bulkBarcode": "BULK-1234",
+      "status": "active"
+    },
+    "quantity": 500,
+    "barcode": "BULK-1234",
+    "poNumber": "456789",
+    "lotNumber": "241007"
+  },
+  "printQuantity": 1,
+  "elements": [
+    {
+      "field": "brand",
+      "kind": "text",
+      "value": "BILLCO CORPORATION",
+      "x": 24,
+      "y": 20,
+      "width": 306,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "partHeading",
+      "kind": "text",
+      "value": "PART #",
+      "x": 24,
+      "y": 88,
+      "width": 102,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "partNumber",
+      "kind": "text",
+      "value": "S39-59b0c9ad-2",
+      "x": 24,
+      "y": 116,
+      "width": 336,
+      "height": 24,
+      "font": "XM",
+      "scale": 1
+    },
+    {
+      "field": "descriptionHeading",
+      "kind": "text",
+      "value": "DESCRIPTION",
+      "x": 24,
+      "y": 204,
+      "width": 187,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "description",
+      "kind": "text",
+      "value": "4\" x 4\" x 1/4\" Angle 4\" x 4\" x 1/",
+      "x": 24,
+      "y": 230,
+      "width": 561,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "description",
+      "kind": "text",
+      "value": "4\" Angle 4\" x 4\" x 1/4\" Angle 4\" ",
+      "x": 24,
+      "y": 252,
+      "width": 561,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "description",
+      "kind": "text",
+      "value": "x 4\" x 1/4\" Angle 4\" x 4\" x 1/4\" ",
+      "x": 24,
+      "y": 274,
+      "width": 561,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "description",
+      "kind": "text",
+      "value": "Angle 4\" x 4\" x 1/4\" Angle 4\" x 4",
+      "x": 24,
+      "y": 296,
+      "width": 561,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "description",
+      "kind": "text",
+      "value": "\" x 1/4\" Angle 4\" x 4\" x 1/4\" Ang",
+      "x": 24,
+      "y": 318,
+      "width": 561,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "description",
+      "kind": "text",
+      "value": "le 4\" x 4\" x 1/4\" Angle 4\" x 4\" x",
+      "x": 24,
+      "y": 340,
+      "width": 561,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "description",
+      "kind": "text",
+      "value": " 1/4\" Angle 4\" x 4\" x 1/4\" Angle ",
+      "x": 24,
+      "y": 362,
+      "width": 561,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "description",
+      "kind": "text",
+      "value": "4\" x 4\" x 1/4\" Angle 4\" x 4\" x 1/",
+      "x": 24,
+      "y": 384,
+      "width": 561,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "description",
+      "kind": "text",
+      "value": "4\" Angle 4\" x 4\" x 1/4\" Angle 4\" ",
+      "x": 24,
+      "y": 406,
+      "width": 561,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "description",
+      "kind": "text",
+      "value": "x 4\" x 1/4\" Angle 4\" x 4\" x 1/4\" ",
+      "x": 24,
+      "y": 428,
+      "width": 561,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "description",
+      "kind": "text",
+      "value": "Angle 4\" x 4\" x 1/4\" Angle 4\" x 4",
+      "x": 24,
+      "y": 450,
+      "width": 561,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "description",
+      "kind": "text",
+      "value": "\" x 1/4\" Angle 4\" x 4\" x 1/4\" Ang",
+      "x": 24,
+      "y": 472,
+      "width": 561,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "description",
+      "kind": "text",
+      "value": "le 4\" x 4\" x 1/4\" Angle",
+      "x": 24,
+      "y": 494,
+      "width": 391,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "quantity",
+      "kind": "text",
+      "value": "QTY 500",
+      "x": 24,
+      "y": 465,
+      "width": 119,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "poHeading",
+      "kind": "text",
+      "value": "PO #",
+      "x": 24,
+      "y": 530,
+      "width": 68,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "poNumber",
+      "kind": "text",
+      "value": "456789",
+      "x": 24,
+      "y": 552,
+      "width": 102,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "lotHeading",
+      "kind": "text",
+      "value": "LOT #",
+      "x": 24,
+      "y": 620,
+      "width": 85,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "lotNumber",
+      "kind": "text",
+      "value": "241007",
+      "x": 24,
+      "y": 642,
+      "width": 102,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    },
+    {
+      "field": "barcode",
+      "kind": "barcode",
+      "value": "BULK-1234",
+      "x": 170,
+      "y": 760,
+      "width": 268,
+      "height": 120
+    },
+    {
+      "field": "barcodeText",
+      "kind": "text",
+      "value": "BULK-1234",
+      "x": 228,
+      "y": 912,
+      "width": 153,
+      "height": 17,
+      "font": "XS",
+      "scale": 1
+    }
+  ],
+  "issues": [
+    {
+      "field": "description",
+      "code": "FIELD_OVERFLOW",
+      "message": "description needs 13 lines; this 3×5 layout allows 8. Full text is preserved."
+    },
+    {
+      "field": "description",
+      "code": "FIELD_OVERLAP",
+      "message": "description overlaps quantity."
+    }
+  ],
+  "valid": false,
+  "payload": null,
+  "id": "aea8d6c6-1227-452f-ad78-3c978746e42c",
+  "requestId": "8a00c81652b5da1975dfcabb67a8bde7",
+  "createdAt": "2026-11-05T20:22:08.785Z"
+}

@@ -1,0 +1,133 @@
+{
+  "hardware": "SATO CL4NX Plus",
+  "dpi": 203,
+  "cases": [
+    {
+      "case": "long-3x2",
+      "stock": "3x2",
+      "dots": [
+        609,
+        406
+      ],
+      "descriptionCharacters": 419,
+      "descriptionPreserved": true,
+      "barcodeTextMatchesEncodedValue": true,
+      "valid": false,
+      "payloadGenerated": false,
+      "issues": [
+        {
+          "field": "description",
+          "code": "FIELD_OVERFLOW",
+          "message": "description needs 13 lines; this 3\u00d72 layout allows 3. Full text is preserved."
+        },
+        {
+          "field": "description",
+          "code": "LABEL_BOUNDS",
+          "message": "description exceeds the printable area (20-dot margins)."
+        },
+        {
+          "field": "description",
+          "code": "FIELD_OVERLAP",
+          "message": "description overlaps quantity."
+        }
+      ]
+    },
+    {
+      "case": "long-3x5",
+      "stock": "3x5",
+      "dots": [
+        609,
+        1015
+      ],
+      "descriptionCharacters": 419,
+      "descriptionPreserved": true,
+      "barcodeTextMatchesEncodedValue": true,
+      "valid": false,
+      "payloadGenerated": false,
+      "issues": [
+        {
+          "field": "description",
+          "code": "FIELD_OVERFLOW",
+          "message": "description needs 13 lines; this 3\u00d75 layout allows 8. Full text is preserved."
+        },
+        {
+          "field": "description",
+          "code": "FIELD_OVERLAP",
+          "message": "description overlaps quantity."
+        }
+      ]
+    },
+    {
+      "case": "medium-3x2",
+      "stock": "3x2",
+      "dots": [
+        609,
+        406
+      ],
+      "descriptionCharacters": 63,
+      "descriptionPreserved": true,
+      "barcodeTextMatchesEncodedValue": true,
+      "valid": true,
+      "payloadGenerated": true,
+      "issues": []
+    },
+    {
+      "case": "medium-3x5",
+      "stock": "3x5",
+      "dots": [
+        609,
+        1015
+      ],
+      "descriptionCharacters": 63,
+      "descriptionPreserved": true,
+      "barcodeTextMatchesEncodedValue": true,
+      "valid": true,
+      "payloadGenerated": true,
+      "issues": []
+    },
+    {
+      "case": "short-3x2",
+      "stock": "3x2",
+      "dots": [
+        609,
+        406
+      ],
+      "descriptionCharacters": 29,
+      "descriptionPreserved": true,
+      "barcodeTextMatchesEncodedValue": true,
+      "valid": true,
+      "payloadGenerated": true,
+      "issues": []
+    },
+    {
+      "case": "short-3x5",
+      "stock": "3x5",
+      "dots": [
+        609,
+        1015
+      ],
+      "descriptionCharacters": 29,
+      "descriptionPreserved": true,
+      "barcodeTextMatchesEncodedValue": true,
+      "valid": true,
+      "payloadGenerated": true,
+      "issues": []
+    }
+  ],
+  "verification": {
+    "build": "passed",
+    "serverTests": {
+      "passed": 119,
+      "failed": 0
+    },
+    "browserTests": {
+      "total": 65,
+      "initialPassed": 61,
+      "initialFailed": 4,
+      "serialRerunPassed": 4,
+      "remainingFailures": 0
+    },
+    "printerTransmissionImplemented": false,
+    "physicalPrintingPerformed": false
+  }
+}
